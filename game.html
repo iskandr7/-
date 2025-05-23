@@ -1441,8 +1441,7 @@
             const seconds = (elapsed % 60).toString().padStart(2, '0');
             document.getElementById('win-time').textContent = `${minutes}:${seconds}`;
             
-            addToLeaderboard(playerName, playerAvatar, elapsed);
-            
+            // Make the win screen visible and start animation first
             const winScreen = document.getElementById('win-screen');
             winScreen.style.display = 'block';
             winScreen.style.opacity = '0';
@@ -1453,6 +1452,13 @@
                 winScreen.style.opacity = '1';
                 winScreen.style.transform = 'scale(1) translate(-50%, -50%)';
             }, 10);
+
+            // Now call addToLeaderboard, wrapped in try...catch
+            try {
+                addToLeaderboard(playerName, playerAvatar, elapsed);
+            } catch (e) {
+                console.error('Error in addToLeaderboard:', e);
+            }
             
             // إخفاء عناصر اللعبة
             document.getElementById('player-info').style.display = 'none';

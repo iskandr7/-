@@ -859,6 +859,19 @@
                 image.src = img.url;
             });
         }
+
+        function getCurrentKsaDateString() {
+            const now = new Date();
+            // Create a date object for KSA time by adding 3 hours (in milliseconds)
+            const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+            
+            // Now extract year, month, day from ksaTime in UTC to avoid local timezone interference
+            const year = ksaTime.getUTCFullYear();
+            const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+            const day = ksaTime.getUTCDate().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
         
         let squares = [];
         let squaresInBlue = [];
@@ -870,9 +883,34 @@
         let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
         
         // محاكاة قاعدة بيانات بسيطة لمشاركة النتائج بين المستخدمين
-        const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // مثال فقط، يجب استبداله بخادم حقيقي
+        // const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // مثال فقط، يجب استبداله بخادم حقيقي
         
         // دالة لتحميل لوحة الصدارة من الخادم
+        function loadLeaderboardData() {
+            const currentKsaDate = getCurrentKsaDateString();
+            const storedDataString = localStorage.getItem('gameLeaderboardData');
+
+            if (!storedDataString) {
+                return []; // No data stored yet
+            }
+
+            try {
+                const storedData = JSON.parse(storedDataString);
+                if (storedData && storedData.ksaDate === currentKsaDate && Array.isArray(storedData.scores)) {
+                    return storedData.scores; // Return scores if date matches
+                } else {
+                    // Data is from a previous day or malformed, reset for the new day
+                    localStorage.removeItem('gameLeaderboardData'); // Optional: clear old data
+                    return []; 
+                }
+            } catch (error) {
+                console.error('Error parsing leaderboard data from localStorage:', error);
+                localStorage.removeItem('gameLeaderboardData'); // Clear malformed data
+                return []; // Return empty array in case of error
+            }
+        }
+
+        /*
         async function loadLeaderboardFromServer() {
             try {
                 // في التطبيق الحقيقي، استخدم fetch لاسترجاع البيانات من الخادم
@@ -895,8 +933,19 @@
                 return [];
             }
         }
+        */
         
-        // دالة لحفظ لوحة الصدارة على الخادم
+        // دالة لحفظ لوحة الصدارة على الخادم (الآن تحفظ محليًا مع تاريخ KSA)
+        function saveLeaderboardData(scoresArray) {
+            const ksaDate = getCurrentKsaDateString();
+            const dataToStore = {
+                ksaDate: ksaDate,
+                scores: scoresArray
+            };
+            localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
+        }
+
+        /*
         async function saveLeaderboardToServer(data) {
             try {
                 // في التطبيق الحقيقي، استخدم fetch لإرسال البيانات للخادم
@@ -922,6 +971,7 @@
                 return false;
             }
         }
+        */
         
         function initGame() {
             preloadImages();
@@ -994,13 +1044,8 @@
                 document.getElementById('player-name-display').textContent = playerName;
             }
             
-            // تحميل لوحة الصدارة من الخادم عند البدء
-            loadLeaderboardFromServer().then(data => {
-                if (data && data.length > 0) {
-                    leaderboard = data;
-                    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-                }
-            });
+            // تحميل لوحة الصدارة من الخادم عند البدء (Now loads from localStorage with KSA date)
+            leaderboard = loadLeaderboardData();
         }
         
         function startGame() {
@@ -1511,33 +1556,33 @@
             updateLeaderboard();
         }
         
-        async function addToLeaderboard(name, avatar, time) {
+        function addToLeaderboard(name, avatar, time) { // Removed async as saveLeaderboardData is synchronous
+            let currentDayScores = loadLeaderboardData();
+
             // تحقق إذا كان اللاعب موجود بالفعل في لوحة الصدارة
-            const existingPlayerIndex = leaderboard.findIndex(player => player.name === name);
+            const existingPlayerIndex = currentDayScores.findIndex(player => player.name === name);
             
             if (existingPlayerIndex !== -1) {
                 // إذا كان الوقت الجديد أفضل، قم بتحديثه
-                if (time < leaderboard[existingPlayerIndex].time) {
-                    leaderboard[existingPlayerIndex].time = time;
-                    leaderboard[existingPlayerIndex].avatar = avatar;
+                if (time < currentDayScores[existingPlayerIndex].time) {
+                    currentDayScores[existingPlayerIndex].time = time;
+                    currentDayScores[existingPlayerIndex].avatar = avatar;
                 }
             } else {
                 // إذا لم يكن موجود، أضفه
-                leaderboard.push({ name, avatar, time });
+                currentDayScores.push({ name, avatar, time });
             }
             
             // ترتيب اللاعبين حسب الوقت
-            leaderboard.sort((a, b) => a.time - b.time);
+            currentDayScores.sort((a, b) => a.time - b.time);
             
             // حفظ أفضل 10 نتائج فقط
-            if (leaderboard.length > 10) {
-                leaderboard = leaderboard.slice(0, 10);
+            if (currentDayScores.length > 10) {
+                currentDayScores = currentDayScores.slice(0, 10);
             }
             
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            
-            // حفظ النتائج على الخادم لمشاركتها بين المستخدمين
-            await saveLeaderboardToServer(leaderboard);
+            saveLeaderboardData(currentDayScores); // Save to localStorage with KSA date
+            leaderboard = currentDayScores; // Update global leaderboard for display
             
             updateLeaderboard();
         }
@@ -1572,13 +1617,8 @@
             return `${mins}:${secs}`;
         }
         
-        async function showLeaderboard() {
-            // تحميل أحدث بيانات لوحة الصدارة من الخادم
-            const serverLeaderboard = await loadLeaderboardFromServer();
-            if (serverLeaderboard && serverLeaderboard.length > 0) {
-                leaderboard = serverLeaderboard;
-                localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            }
+        function showLeaderboard() { // Removed async
+            leaderboard = loadLeaderboardData(); // Load KSA date-specific data
             
             updateLeaderboard();
             document.getElementById('main-menu').style.display = 'none';

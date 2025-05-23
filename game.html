@@ -911,7 +911,7 @@
         
         // دالة لتحميل لوحة الصدارة من الخادم
         function loadLeaderboardData() {
-            alert('Attempting to load leaderboard. Stored data: ' + localStorage.getItem('gameLeaderboardData'));
+            // Alert removed: alert('Attempting to load leaderboard. Stored data: ' + localStorage.getItem('gameLeaderboardData'));
             const currentKsaDate = getCurrentKsaDateString();
             const storedDataString = localStorage.getItem('gameLeaderboardData');
 
@@ -925,7 +925,7 @@
                     return storedData.scores; // Return scores if date matches
                 } else {
                     // Data is from a previous day or malformed, reset for the new day
-                    alert('Leaderboard data is old or malformed. Current KSA Date: ' + currentKsaDate + '. Stored KSA Date: ' + (storedData ? storedData.ksaDate : 'N/A') + '. Scores isArray: ' + (storedData ? Array.isArray(storedData.scores) : 'N/A'));
+                    // Alert removed: alert('Leaderboard data is old or malformed. Current KSA Date: ' + currentKsaDate + '. Stored KSA Date: ' + (storedData ? storedData.ksaDate : 'N/A') + '. Scores isArray: ' + (storedData ? Array.isArray(storedData.scores) : 'N/A'));
                     localStorage.removeItem('gameLeaderboardData'); // Optional: clear old data
                     return []; 
                 }
@@ -970,11 +970,9 @@
             };
             try {
                 localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
-                // If setItem succeeds, show success alert:
-                alert('Leaderboard data saved successfully for KSA date: ' + dataToStore.ksaDate + '. Scores saved: ' + scoresArray.length);
+                // If setItem succeeds, success alert was removed.
             } catch (e) {
-                // If any error during stringify or setItem, show error alert:
-                alert('Error during leaderboard save! Message: ' + e.toString());
+                // If any error during stringify or setItem, error alert was removed.
                 console.error('Failed to save leaderboard:', e, dataToStore); // For internal logging, user won't see console.
             }
         }

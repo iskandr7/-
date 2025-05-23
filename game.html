@@ -968,8 +968,15 @@
                 ksaDate: ksaDate,
                 scores: scoresArray
             };
-            localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
-            alert('Leaderboard supposedly saved. Data: ' + localStorage.getItem('gameLeaderboardData'));
+            try {
+                localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
+                // If setItem succeeds, show success alert:
+                alert('Leaderboard data saved successfully for KSA date: ' + dataToStore.ksaDate + '. Scores saved: ' + scoresArray.length);
+            } catch (e) {
+                // If any error during stringify or setItem, show error alert:
+                alert('Error during leaderboard save! Message: ' + e.toString());
+                console.error('Failed to save leaderboard:', e, dataToStore); // For internal logging, user won't see console.
+            }
         }
 
         /*

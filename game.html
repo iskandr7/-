@@ -1004,15 +1004,19 @@
         }
         
         function startGame() {
+            clearInterval(timerInterval); // Added: Clear any existing timer
+
             gameStarted = true;
             
-            // إعداد عناصر اللعبة
+            // إعداد عناصر اللعبة (UI elements setup)
+            document.getElementById('win-screen').style.display = 'none'; // Added: Hide win screen
+            document.getElementById('lose-screen').style.display = 'none'; // Added: Hide lose screen
             document.getElementById('blue-rectangle').style.display = 'flex';
             document.getElementById('squares-container').style.display = 'block';
             document.getElementById('player-info').style.display = 'flex';
             document.getElementById('exit-button').style.display = 'block';
             
-            // مسح المربعات القديمة إن وجدت
+            // مسح المربعات القديمة إن وجدت (Clear old squares if any)
             squares.forEach(square => {
                 if (square.parentNode) {
                     square.parentNode.removeChild(square);
@@ -1020,8 +1024,14 @@
             });
             squares = [];
             squaresInBlue = [];
+
+            // Added: Clear children of blue-rectangle
+            const blueRectangleDOM = document.getElementById('blue-rectangle');
+            if (blueRectangleDOM) { 
+                blueRectangleDOM.innerHTML = '';
+            }
             
-            // إنشاء المربعات الجديدة
+            // إنشاء المربعات الجديدة (Create new squares)
             const squaresContainer = document.getElementById('squares-container');
             const containerWidth = squaresContainer.clientWidth;
             const containerHeight = squaresContainer.clientHeight;
@@ -1446,6 +1456,12 @@
             });
             squares = [];
             squaresInBlue = [];
+
+            // Added: Clear children of blue-rectangle
+            const blueRectangleDOM = document.getElementById('blue-rectangle');
+            if (blueRectangleDOM) {
+                blueRectangleDOM.innerHTML = '';
+            }
             
             // إظهار الصفحة الرئيسية
             document.getElementById('main-menu').style.display = 'flex';

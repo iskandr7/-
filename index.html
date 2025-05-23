@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Test Page</title>
+<style>
+  #blue-rectangle {
+    width: 100px;
+    height: 100px;
+    background-color: blue;
+  }
+</style>
+</head>
+<body>
+
+<div id="blue-rectangle"></div>
+
+<script>
+function dropSquare() {
+  const blueRectangle = document.getElementById('blue-rectangle'); // This line needs to be changed
+  if (blueRectangle) {
+    // Do something with blueRectangle
+    console.log('Found blue rectangle');
+  } else {
+    console.log('Blue rectangle not found');
+  }
+}
+
+dropSquare();
+</script>
+
+</body>
+</html>

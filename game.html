@@ -872,6 +872,30 @@
             
             return `${year}-${month}-${day}`;
         }
+
+        function isLocalStorageAvailable() {
+            let storage;
+            try {
+                storage = window.localStorage;
+                const x = '__storage_test__';
+                storage.setItem(x, x);
+                storage.removeItem(x);
+                return true;
+            } catch (e) {
+                return e instanceof DOMException && (
+                    // everything except Firefox
+                    e.code === 22 ||
+                    // Firefox
+                    e.code === 1014 ||
+                    // test name field too, because code might not be present
+                    // everything except Firefox
+                    e.name === 'QuotaExceededError' ||
+                    // Firefox
+                    e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+                    // acknowledge QuotaExceededError only if there's something already stored
+                    (storage && storage.length !== 0);
+            }
+        }
         
         let squares = [];
         let squaresInBlue = [];
@@ -887,6 +911,7 @@
         
         // دالة لتحميل لوحة الصدارة من الخادم
         function loadLeaderboardData() {
+            alert('Attempting to load leaderboard. Stored data: ' + localStorage.getItem('gameLeaderboardData'));
             const currentKsaDate = getCurrentKsaDateString();
             const storedDataString = localStorage.getItem('gameLeaderboardData');
 
@@ -900,6 +925,7 @@
                     return storedData.scores; // Return scores if date matches
                 } else {
                     // Data is from a previous day or malformed, reset for the new day
+                    alert('Leaderboard data is old or malformed. Current KSA Date: ' + currentKsaDate + '. Stored KSA Date: ' + (storedData ? storedData.ksaDate : 'N/A') + '. Scores isArray: ' + (storedData ? Array.isArray(storedData.scores) : 'N/A'));
                     localStorage.removeItem('gameLeaderboardData'); // Optional: clear old data
                     return []; 
                 }
@@ -943,6 +969,7 @@
                 scores: scoresArray
             };
             localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
+            alert('Leaderboard supposedly saved. Data: ' + localStorage.getItem('gameLeaderboardData'));
         }
 
         /*
@@ -986,6 +1013,26 @@
             const playerInfo = document.getElementById('player-info');
             
             const squaresContainer = document.getElementById('squares-container');
+
+            if (!isLocalStorageAvailable()) {
+                let warningDiv = document.getElementById('storage-warning');
+                if (!warningDiv) {
+                    warningDiv = document.createElement('div');
+                    warningDiv.id = 'storage-warning';
+                    gameContainer.appendChild(warningDiv);
+                }
+                warningDiv.textContent = "تحذير: مساحة تخزين المتصفح غير متاحة. لن يتم حفظ نتائج لوحة الصدارة.";
+                warningDiv.style.position = 'fixed';
+                warningDiv.style.top = '10px';
+                warningDiv.style.left = '50%';
+                warningDiv.style.transform = 'translateX(-50%)';
+                warningDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                warningDiv.style.color = 'white';
+                warningDiv.style.padding = '10px';
+                warningDiv.style.borderRadius = '5px';
+                warningDiv.style.zIndex = '2000';
+                warningDiv.style.textAlign = 'center';
+            }
             
             // إخفاء عناصر اللعبة عند البدء
             blueRectangle.style.display = 'none';

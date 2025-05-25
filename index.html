@@ -81,7 +81,7 @@
         #player-info { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; z-index: 100; }
         #player-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--primary-color); object-fit: cover; margin-bottom: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
         #player-name-display { font-size: 18px; font-weight: 700; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-        #exit-button { position: absolute; top: 5%; left: 5%; background: none; color: #333; border: none; padding: 10px; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); z-index: 100; display: none; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
+        #exit-button { position: absolute; top: 5%; left: 5%; background: none; color: #333; border: none; padding: 10px; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); z-index: 100; display: none; width: 40px; height: 40px; justify-content: center; align-items: center; transition: all 0.3s; }
         #exit-button:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
         #win-screen { text-align: center; }
         #win-screen h2 { margin-bottom: 5px; }
@@ -94,14 +94,12 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- الصفحة الرئيسية -->
         <div class="main-menu" id="main-menu">
             <h1 class="game-title">جمل مجنون</h1>
             <button id="start-button">ابدأ اللعب</button>
             <button id="profile-button">الملف الشخصي</button>
             <button id="leaderboard-button">لوحة الصدارة</button>
         </div>
-        <!-- عناصر اللعبة -->
         <button id="exit-button">←</button>
         <div id="player-info">
             <img id="player-avatar" src="https://i.imgur.com/8Km9tLL.png" alt="صورة اللاعب">
@@ -109,7 +107,6 @@
         </div>
         <div id="blue-rectangle"></div>
         <div id="squares-container"></div>
-        <!-- شاشات النتائج -->
         <div id="win-screen" class="result-screen">
             <h2>🎉 مبروك لقد فزت!</h2>
             <p class="time-label">الوقت المستغرق:</p>
@@ -122,7 +119,6 @@
             <p>حاول مرة أخرى!</p>
             <button onclick="backToMainMenu()">العودة للصفحة الرئيسية</button>
         </div>
-        <!-- صفحة الملف الشخصي - تم التحديث -->
         <div id="profile-screen" class="profile-screen">
             <div class="profile-form">
                 <h2>الملف الشخصي</h2>
@@ -140,7 +136,6 @@
                 </div>
             </div>
         </div>
-        <!-- لوحة الصدارة -->
         <div id="leaderboard-screen" class="leaderboard-screen">
             <div class="leaderboard-header">
                 <h2>أفضل الأوقات</h2>
@@ -167,748 +162,210 @@
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app); // Firestore instance
-
+    const db = getFirestore(app);
     window.db = db;
-    window.fb = {
-        collection,
-        getDocs,
-        addDoc,
-        query,
-        orderBy,
-        limit,
-        where,
-        doc,
-        updateDoc,
-        serverTimestamp
-    };
+    window.fb = { collection, getDocs, addDoc, query, orderBy, limit, where, doc, updateDoc, serverTimestamp };
 
     const images = [
-        { name: 'جوهرة', url: 'https://i.imgur.com/AjPTyZC.png' },
-        { name: 'نعناع', url: 'https://i.imgur.com/O3nvXac.png' },
-        { name: 'حليب', url: 'https://i.imgur.com/ifJb1W5.png' },
-        { name: 'جزر', url: 'https://i.imgur.com/prC9PT2.png' },
-        { name: 'قفاز', url: 'https://i.imgur.com/1UEmBN5.png' },
-        { name: 'جورب', url: 'https://i.imgur.com/cV25GC9.png' },
-        { name: 'جبن', url: 'https://i.imgur.com/nc8njcj.png' },
-        { name: 'لحم', url: 'https://i.imgur.com/jQvWLPZ.png' },
-        { name: 'قطن', url: 'https://i.imgur.com/VcJHy4z.png' },
-        { name: 'قبعة', url: 'https://i.imgur.com/FHjeX0s.png' }
+        { name: 'جوهرة', url: 'https://i.imgur.com/AjPTyZC.png' }, { name: 'نعناع', url: 'https://i.imgur.com/O3nvXac.png' },
+        { name: 'حليب', url: 'https://i.imgur.com/ifJb1W5.png' }, { name: 'جزر', url: 'https://i.imgur.com/prC9PT2.png' },
+        { name: 'قفاز', url: 'https://i.imgur.com/1UEmBN5.png' }, { name: 'جورب', url: 'https://i.imgur.com/cV25GC9.png' },
+        { name: 'جبن', url: 'https://i.imgur.com/nc8njcj.png' }, { name: 'لحم', url: 'https://i.imgur.com/jQvWLPZ.png' },
+        { name: 'قطن', url: 'https://i.imgur.com/VcJHy4z.png' }, { name: 'قبعة', url: 'https://i.imgur.com/FHjeX0s.png' }
     ];
-    
-    function preloadImages() {
-        images.forEach(img => {
-            const image = new Image();
-            image.src = img.url;
-        });
-    }
 
+    function preloadImages() { images.forEach(img => { const image = new Image(); image.src = img.url; }); }
     function getCurrentKsaDateString() {
-        const now = new Date();
-        const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-        const year = ksaTime.getUTCFullYear();
-        const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0');
-        const day = ksaTime.getUTCDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const now = new Date(); const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+        const year = ksaTime.getUTCFullYear(); const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = ksaTime.getUTCDate().toString().padStart(2, '0'); return `${year}-${month}-${day}`;
     }
-
     function isLocalStorageAvailable() {
-        let storage;
-        try {
-            storage = window.localStorage;
-            const x = '__storage_test__';
-            storage.setItem(x, x);
-            storage.removeItem(x);
-            return true;
-        } catch (e) {
-            return e instanceof DOMException && (
-                e.code === 22 ||
-                e.code === 1014 ||
-                e.name === 'QuotaExceededError' ||
-                e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
-                (storage && storage.length !== 0);
-        }
+        let storage; try { storage = window.localStorage; const x = '__storage_test__'; storage.setItem(x, x); storage.removeItem(x); return true; }
+        catch (e) { return e instanceof DOMException && (e.code === 22 || e.code === 1014 || e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') && (storage && storage.length !== 0); }
     }
-    
-    let squares = [];
-    let squaresInBlue = [];
-    let gameStarted = false;
-    let startTime;
-    let timerInterval;
-    let playerName = localStorage.getItem('playerName') || '';
-    let playerAvatar = localStorage.getItem('playerAvatar') || '';
-    let leaderboard = []; 
-    
+    let squares = []; let squaresInBlue = []; let gameStarted = false; let startTime; let timerInterval;
+    let playerName = localStorage.getItem('playerName') || ''; let playerAvatar = localStorage.getItem('playerAvatar') || '';
+    let leaderboard = [];
+
     async function loadLeaderboardData() {
-        const currentKsaDate = getCurrentKsaDateString();
-        console.log(`Loading leaderboard for date: ${currentKsaDate}`);
+        const currentKsaDate = getCurrentKsaDateString(); console.log(`Loading leaderboard for date: ${currentKsaDate}`);
         try {
             const scoresCol = fb.collection(db, 'leaderboard_scores');
-            const q = fb.query(scoresCol, 
-                              fb.where('ksaDate', '==', currentKsaDate), 
-                              fb.orderBy('scoreTime', 'asc'), 
-                              fb.limit(10));
-            const querySnapshot = await fb.getDocs(q);
-            const dailyScores = [];
-            querySnapshot.forEach((doc) => {
-                dailyScores.push({ 
-                    id: doc.id, 
-                    playerName: doc.data().playerName, 
-                    playerAvatar: doc.data().playerAvatar, 
-                    scoreTime: doc.data().scoreTime,
-                    ksaDate: doc.data().ksaDate 
-                });
-            });
-            console.log('Fetched scores:', dailyScores);
-            return dailyScores;
-        } catch (error) {
-            console.error('Error loading leaderboard from Firestore:', error);
-            alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.');
-            return []; 
-        }
+            const q = fb.query(scoresCol, fb.where('ksaDate', '==', currentKsaDate), fb.orderBy('scoreTime', 'asc'), fb.limit(10));
+            const querySnapshot = await fb.getDocs(q); const dailyScores = [];
+            querySnapshot.forEach((doc) => { dailyScores.push({ id: doc.id, playerName: doc.data().playerName, playerAvatar: doc.data().playerAvatar, scoreTime: doc.data().scoreTime, ksaDate: doc.data().ksaDate }); });
+            console.log('Fetched scores:', dailyScores); leaderboard = dailyScores; return dailyScores;
+        } catch (error) { console.error('Error loading leaderboard from Firestore:', error); alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.'); leaderboard = []; return []; }
     }
-    
-    async function initGame() { 
+    async function initGame() {
         preloadImages();
-        
-        const gameContainer = document.getElementById('game-container');
-        const blueRectangle = document.getElementById('blue-rectangle');
-        const startButton = document.getElementById('start-button');
-        const profileButton = document.getElementById('profile-button');
-        const leaderboardButton = document.getElementById('leaderboard-button');
-        const mainMenu = document.getElementById('main-menu');
-        const exitButton = document.getElementById('exit-button');
-        const playerInfo = document.getElementById('player-info');
+        const gameContainer = document.getElementById('game-container'); const blueRectangle = document.getElementById('blue-rectangle');
+        const startButton = document.getElementById('start-button'); const profileButton = document.getElementById('profile-button');
+        const leaderboardButton = document.getElementById('leaderboard-button'); const mainMenu = document.getElementById('main-menu');
+        const exitButton = document.getElementById('exit-button'); const playerInfo = document.getElementById('player-info');
         const squaresContainer = document.getElementById('squares-container');
-
         if (!isLocalStorageAvailable()) {
-            let warningDiv = document.getElementById('storage-warning');
-            if (!warningDiv) {
-                warningDiv = document.createElement('div');
-                warningDiv.id = 'storage-warning';
-                if(gameContainer) gameContainer.appendChild(warningDiv);
-            }
-            if(warningDiv){ 
-                warningDiv.textContent = "تحذير: مساحة تخزين المتصفح غير متاحة. لن يتم حفظ نتائج لوحة الصدارة.";
-                warningDiv.style.position = 'fixed';
-                warningDiv.style.top = '10px';
-                warningDiv.style.left = '50%';
-                warningDiv.style.transform = 'translateX(-50%)';
-                warningDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-                warningDiv.style.color = 'white';
-                warningDiv.style.padding = '10px';
-                warningDiv.style.borderRadius = '5px';
-                warningDiv.style.zIndex = '2000';
-                warningDiv.style.textAlign = 'center';
-            }
+            let warningDiv = document.getElementById('storage-warning'); if (!warningDiv) { warningDiv = document.createElement('div'); warningDiv.id = 'storage-warning'; if (gameContainer) gameContainer.appendChild(warningDiv); }
+            if (warningDiv) { warningDiv.textContent = "تحذير: مساحة تخزين المتصفح غير متاحة. لن يتم حفظ نتائج لوحة الصدارة."; warningDiv.style.position = 'fixed'; warningDiv.style.top = '10px'; warningDiv.style.left = '50%'; warningDiv.style.transform = 'translateX(-50%)'; warningDiv.style.backgroundColor = 'rgba(255,0,0,0.8)'; warningDiv.style.color = 'white'; warningDiv.style.padding = '10px'; warningDiv.style.borderRadius = '5px'; warningDiv.style.zIndex = '2000'; warningDiv.style.textAlign = 'center'; }
         }
-        
-        if(blueRectangle) blueRectangle.style.display = 'none';
-        if(squaresContainer) squaresContainer.style.display = 'none';
-        if(playerInfo) playerInfo.style.display = 'none';
-        if(exitButton) exitButton.style.display = 'none';
-        if(mainMenu) mainMenu.style.display = 'flex';
-        
-        if(startButton) startButton.addEventListener('click', () => {
-            if (!playerName) {
-                showProfileScreen();
-                return;
-            }
-            startGame();
-            if(mainMenu) mainMenu.style.display = 'none';
-        });
-        
-        if(profileButton) profileButton.addEventListener('click', () => {
-            showProfileScreen();
-        });
-        
-        if(leaderboardButton) leaderboardButton.addEventListener('click', () => {
-            showLeaderboard();
-        });
-        
-        if(exitButton) exitButton.addEventListener('click', () => {
-            backToMainMenu();
-        });
-        
+        if (blueRectangle) blueRectangle.style.display = 'none'; if (squaresContainer) squaresContainer.style.display = 'none'; if (playerInfo) playerInfo.style.display = 'none'; if (exitButton) exitButton.style.display = 'none'; if (mainMenu) mainMenu.style.display = 'flex';
+        if (startButton) startButton.addEventListener('click', () => { if (!playerName) { showProfileScreen(); return; } startGame(); if (mainMenu) mainMenu.style.display = 'none'; });
+        if (profileButton) profileButton.addEventListener('click', () => { showProfileScreen(); });
+        if (leaderboardButton) leaderboardButton.addEventListener('click', () => { showLeaderboard(); });
+        if (exitButton) exitButton.addEventListener('click', () => { backToMainMenu(); });
         const avatarUpload = document.getElementById('avatar-upload');
-        if(avatarUpload) avatarUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const avatarPreview = document.getElementById('avatar-preview');
-                    if(avatarPreview) avatarPreview.innerHTML = `<img src="${event.target.result}" alt="صورة اللاعب">`;
-                    playerAvatar = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        if (playerAvatar) {
-            const avatarPreview = document.getElementById('avatar-preview');
-            if(avatarPreview) avatarPreview.innerHTML = `<img src="${playerAvatar}" alt="صورة اللاعب">`;
-            const playerAvatarImg = document.getElementById('player-avatar');
-            if(playerAvatarImg) playerAvatarImg.src = playerAvatar;
-        }
-        
-        if (playerName) {
-            const playerNameInput = document.getElementById('player-name');
-            if(playerNameInput) playerNameInput.value = playerName;
-            const playerNameDisplay = document.getElementById('player-name-display');
-            if(playerNameDisplay) playerNameDisplay.textContent = playerName;
-        }
-        
-        try {
-            leaderboard = await loadLeaderboardData(); 
-        } catch (err) {
-            console.error("Failed to load leaderboard during initGame:", err);
-            leaderboard = []; 
-        }
+        if (avatarUpload) avatarUpload.addEventListener('change', function (e) { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = function (event) { const avatarPreview = document.getElementById('avatar-preview'); if (avatarPreview) avatarPreview.innerHTML = `<img src="${event.target.result}" alt="صورة اللاعب">`; playerAvatar = event.target.result; }; reader.readAsDataURL(file); } });
+        if (playerAvatar) { const avatarPreview = document.getElementById('avatar-preview'); if (avatarPreview) avatarPreview.innerHTML = `<img src="${playerAvatar}" alt="صورة اللاعب">`; const playerAvatarImg = document.getElementById('player-avatar'); if (playerAvatarImg) playerAvatarImg.src = playerAvatar; }
+        if (playerName) { const playerNameInput = document.getElementById('player-name'); if (playerNameInput) playerNameInput.value = playerName; const playerNameDisplay = document.getElementById('player-name-display'); if (playerNameDisplay) playerNameDisplay.textContent = playerName; }
+        try { await loadLeaderboardData(); } catch (err) { console.error("Failed to load leaderboard during initGame:", err); }
     }
-    
     function startGame() {
-        clearInterval(timerInterval); 
-        gameStarted = true;
-        
-        const winScreen = document.getElementById('win-screen');
-        if(winScreen) winScreen.style.display = 'none'; 
-        const loseScreen = document.getElementById('lose-screen');
-        if(loseScreen) loseScreen.style.display = 'none'; 
-        
-        const blueRect = document.getElementById('blue-rectangle');
-        if(blueRect) blueRect.style.display = 'flex';
-        const squaresCont = document.getElementById('squares-container');
-        if(squaresCont) squaresCont.style.display = 'block';
-        const playerInfoDiv = document.getElementById('player-info');
-        if(playerInfoDiv) playerInfoDiv.style.display = 'flex';
-        const exitBtn = document.getElementById('exit-button');
-        if(exitBtn) exitBtn.style.display = 'block';
-        
-        squares.forEach(square => {
-            if (square.parentNode) {
-                square.parentNode.removeChild(square);
-            }
-        });
-        squares = [];
-        squaresInBlue = [];
-
-        const blueRectangleDOM = document.getElementById('blue-rectangle');
-        if (blueRectangleDOM) { 
-            blueRectangleDOM.innerHTML = '';
-        }
-        
-        const squaresContainer = document.getElementById('squares-container');
-        if (!squaresContainer) { console.error("squares-container not found!"); return; }
-
-        const containerWidth = squaresContainer.clientWidth;
-        const containerHeight = squaresContainer.clientHeight;
-        const squareSize = Math.min(containerWidth, containerHeight) * 0.12;
-        
-        const shuffledImages = [...images];
-        for (let i = shuffledImages.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
-        }
-        
+        clearInterval(timerInterval); gameStarted = true;
+        const winScreen = document.getElementById('win-screen'); if (winScreen) winScreen.style.display = 'none'; const loseScreen = document.getElementById('lose-screen'); if (loseScreen) loseScreen.style.display = 'none';
+        const blueRect = document.getElementById('blue-rectangle'); if (blueRect) blueRect.style.display = 'flex'; const squaresCont = document.getElementById('squares-container'); if (squaresCont) squaresCont.style.display = 'block'; const playerInfoDiv = document.getElementById('player-info'); if (playerInfoDiv) playerInfoDiv.style.display = 'flex'; const exitBtn = document.getElementById('exit-button'); if (exitBtn) exitBtn.style.display = 'block';
+        squares.forEach(square => { if (square.parentNode) { square.parentNode.removeChild(square); } }); squares = []; squaresInBlue = [];
+        const blueRectangleDOM = document.getElementById('blue-rectangle'); if (blueRectangleDOM) { blueRectangleDOM.innerHTML = ''; }
+        const squaresContainer = document.getElementById('squares-container'); if (!squaresContainer) { console.error("squares-container not found!"); return; }
+        const containerWidth = squaresContainer.clientWidth; const containerHeight = squaresContainer.clientHeight; const squareSize = Math.min(containerWidth, containerHeight) * 0.12;
+        const shuffledImages = [...images]; for (let i = shuffledImages.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]]; }
         for (let i = 0; i < 180; i++) {
-            const square = document.createElement('div');
-            square.className = 'square';
-            const imageIndex = Math.floor(i / 18);
-            const image = shuffledImages[imageIndex % shuffledImages.length];
-            square.style.backgroundImage = `url(${image.url})`;
-            square.dataset.image = image.url;
-            square.dataset.name = image.name;
-            
-            let posX, posY;
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            do {
-                const col = Math.floor(Math.random() * 10);
-                const row = Math.floor(Math.random() * 10);
-                
-                posX = col * (containerWidth / 10) + (Math.random() * 20 - 10);
-                posY = row * (containerHeight / 10) + (Math.random() * 20 - 10);
-                attempts++;
-            } while (isPositionOverlapping(posX, posY, squareSize, squares) && attempts < maxAttempts);
-            
-            square.style.left = Math.max(0, Math.min(containerWidth - squareSize, posX)) + 'px';
-            square.style.top = Math.max(0, Math.min(containerHeight - squareSize, posY)) + 'px';
-            
-            const randomRotation = Math.random() * 30 - 15;
-            square.dataset.rotation = randomRotation;
-            square.style.transform = `rotate(${randomRotation}deg)`;
-            
-            square.style.zIndex = 100 - i;
-            square.dataset.coveredBy = JSON.stringify([]);
-            
-            squaresContainer.appendChild(square);
-            squares.push(square);
+            const square = document.createElement('div'); square.className = 'square'; const imageIndex = Math.floor(i / 18); const image = shuffledImages[imageIndex % shuffledImages.length]; square.style.backgroundImage = `url(${image.url})`; square.dataset.image = image.url; square.dataset.name = image.name;
+            let posX, posY; let attempts = 0; const maxAttempts = 10;
+            do { const col = Math.floor(Math.random() * 10); const row = Math.floor(Math.random() * 10); posX = col * (containerWidth / 10) + (Math.random() * 20 - 10); posY = row * (containerHeight / 10) + (Math.random() * 20 - 10); attempts++; } while (isPositionOverlapping(posX, posY, squareSize, squares) && attempts < maxAttempts);
+            square.style.left = Math.max(0, Math.min(containerWidth - squareSize, posX)) + 'px'; square.style.top = Math.max(0, Math.min(containerHeight - squareSize, posY)) + 'px';
+            const randomRotation = Math.random() * 30 - 15; square.dataset.rotation = randomRotation; square.style.transform = `rotate(${randomRotation}deg)`;
+            square.style.zIndex = 100 - i; square.dataset.coveredBy = JSON.stringify([]); squaresContainer.appendChild(square); squares.push(square);
         }
-        
-        startTime = new Date();
-        timerInterval = setInterval(updateTimer, 1000);
-        
-        squares.forEach((square, index) => {
-            setTimeout(() => {
-                square.style.opacity = '0';
-                square.style.transform = `rotate(${square.dataset.rotation}deg) scale(0.5)`;
-                
-                setTimeout(() => {
-                    square.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                    square.style.opacity = '1';
-                    square.style.transform = `rotate(${square.dataset.rotation}deg) scale(1)`;
-                }, 10);
-            }, index * 20);
-        });
-        
+        startTime = new Date(); timerInterval = setInterval(updateTimer, 1000);
+        squares.forEach((square, index) => { setTimeout(() => { square.style.opacity = '0'; square.style.transform = `rotate(${square.dataset.rotation}deg) scale(0.5)`; setTimeout(() => { square.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; square.style.opacity = '1'; square.style.transform = `rotate(${square.dataset.rotation}deg) scale(1)`; }, 10); }, index * 20); });
         setTimeout(() => {
             updateCoveredSquares();
-            
             squares.forEach((square, index) => {
-                const handleHover = () => {
-                    if (gameStarted) {
-                        const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-                        if (coveredBy.length === 0) {
-                            const originalRotation = square.dataset.rotation || '0';
-                            square.style.transition = 'transform 0.2s ease';
-                            square.style.transform = `rotate(${originalRotation}deg) scale(1.15)`;
-                            square.style.boxShadow = '4px 4px 12px rgba(0, 0, 0, 0.5)';
-                            square.style.zIndex = 1000;
-                        }
-                    }
-                };
-                
-                const handleHoverEnd = () => {
-                    const originalRotation = square.dataset.rotation || '0';
-                    square.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                    square.style.transform = `rotate(${originalRotation}deg) scale(1)`;
-                    square.style.boxShadow = '3px 3px 10px rgba(0, 0, 0, 0.3)';
-                    square.style.zIndex = 100 - index;
-                };
-                
-                square.addEventListener('mouseenter', handleHover);
-                square.addEventListener('mouseleave', handleHoverEnd);
-                
-                square.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    handleSquareClick(square, index);
-                });
-                
-                square.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    handleSquareClick(square, index);
-                }, { passive: false });
+                const handleHover = () => { if (gameStarted) { const coveredBy = JSON.parse(square.dataset.coveredBy || '[]'); if (coveredBy.length === 0) { const originalRotation = square.dataset.rotation || '0'; square.style.transition = 'transform 0.2s ease'; square.style.transform = `rotate(${originalRotation}deg) scale(1.15)`; square.style.boxShadow = '4px 4px 12px rgba(0,0,0,0.5)'; square.style.zIndex = 1000; } } };
+                const handleHoverEnd = () => { const originalRotation = square.dataset.rotation || '0'; square.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; square.style.transform = `rotate(${originalRotation}deg) scale(1)`; square.style.boxShadow = '3px 3px 10px rgba(0,0,0,0.3)'; square.style.zIndex = 100 - index; };
+                square.addEventListener('mouseenter', handleHover); square.addEventListener('mouseleave', handleHoverEnd);
+                square.addEventListener('click', (e) => { e.preventDefault(); handleSquareClick(square, index); });
+                square.addEventListener('touchstart', (e) => { e.preventDefault(); handleSquareClick(square, index); }, { passive: false });
             });
         }, 500);
     }
-    
-    function isPositionOverlapping(x, y, size, existingSquares) {
-        for (const square of existingSquares) {
-            const rect = square.getBoundingClientRect();
-            const distance = Math.sqrt(Math.pow(x - parseFloat(square.style.left), 2) + 
-                                      Math.pow(y - parseFloat(square.style.top), 2));
-            if (distance < size * 1.2) { return true; }
-        }
-        return false;
-    }
-    
-    function handleSquareClick(square, index) {
-        if (!gameStarted) return;
-        const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-        if (coveredBy.length === 0) {
-            dropSquare(square, index);
-        } else {
-            square.classList.add('shake');
-            setTimeout(() => { square.classList.remove('shake'); }, 400);
-        }
-    }
-    
+    function isPositionOverlapping(x, y, size, existingSquares) { for (const square of existingSquares) { const rect = square.getBoundingClientRect(); const distance = Math.sqrt(Math.pow(x - parseFloat(square.style.left), 2) + Math.pow(y - parseFloat(square.style.top), 2)); if (distance < size * 1.2) { return true; } } return false; }
+    function handleSquareClick(square, index) { if (!gameStarted) return; const coveredBy = JSON.parse(square.dataset.coveredBy || '[]'); if (coveredBy.length === 0) { dropSquare(square, index); } else { square.classList.add('shake'); setTimeout(() => { square.classList.remove('shake'); }, 400); } }
     function updateCoveredSquares() {
         requestAnimationFrame(() => {
             squares.forEach(square => { square.dataset.coveredBy = JSON.stringify([]); });
             for (let i = 0; i < squares.length; i++) {
-                if ( squares[i].style.display === 'none') continue;
-                const rect1 = squares[i].getBoundingClientRect();
+                if (squares[i].style.display === 'none') continue; const rect1 = squares[i].getBoundingClientRect();
                 for (let j = i + 1; j < squares.length; j++) {
-                    if (squares[j].style.display === 'none') continue;
-                    const rect2 = squares[j].getBoundingClientRect();
-                    if (isOverlapping(rect1, rect2)) {
-                        if (parseInt(squares[i].style.zIndex) < parseInt(squares[j].style.zIndex)) {
-                            const coveredByList = JSON.parse(squares[i].dataset.coveredBy || '[]');
-                            if (!coveredByList.includes(j)) {
-                                coveredByList.push(j);
-                                squares[i].dataset.coveredBy = JSON.stringify(coveredByList);
-                            }
-                        } else {
-                            const coveredByList = JSON.parse(squares[j].dataset.coveredBy || '[]');
-                            if (!coveredByList.includes(i)) {
-                                coveredByList.push(i);
-                                squares[j].dataset.coveredBy = JSON.stringify(coveredByList);
-                            }
-                        }
-                    }
+                    if (squares[j].style.display === 'none') continue; const rect2 = squares[j].getBoundingClientRect();
+                    if (isOverlapping(rect1, rect2)) { if (parseInt(squares[i].style.zIndex) < parseInt(squares[j].style.zIndex)) { const coveredByList = JSON.parse(squares[i].dataset.coveredBy || '[]'); if (!coveredByList.includes(j)) { coveredByList.push(j); squares[i].dataset.coveredBy = JSON.stringify(coveredByList); } } else { const coveredByList = JSON.parse(squares[j].dataset.coveredBy || '[]'); if (!coveredByList.includes(i)) { coveredByList.push(i); squares[j].dataset.coveredBy = JSON.stringify(coveredByList); } } }
                 }
             }
-            squares.forEach(square => {
-                const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-                if (coveredBy.length > 0) {
-                    if (!square.classList.contains('covered')) {
-                        square.style.transition = 'box-shadow 0.3s ease';
-                        square.classList.add('covered');
-                    }
-                } else {
-                    if (square.classList.contains('covered')) {
-                        square.style.transition = 'box-shadow 0.3s ease';
-                        square.classList.remove('covered');
-                    }
-                }
-            });
+            squares.forEach(square => { const coveredBy = JSON.parse(square.dataset.coveredBy || '[]'); if (coveredBy.length > 0) { if (!square.classList.contains('covered')) { square.style.transition = 'box-shadow 0.3s ease'; square.classList.add('covered'); } } else { if (square.classList.contains('covered')) { square.style.transition = 'box-shadow 0.3s ease'; square.classList.remove('covered'); } } });
             checkGameEnd();
         });
     }
-    
-    function isOverlapping(rect1, rect2) {
-        const margin = 8;
-        return !(rect1.right - margin < rect2.left + margin || rect1.left + margin > rect2.right - margin || rect1.bottom - margin < rect2.top + margin || rect1.top + margin > rect2.bottom - margin);
-    }
-    
-    function updateTimer() {
-        const now = new Date();
-        const elapsed = Math.floor((now - startTime) / 1000);
-        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-        const seconds = (elapsed % 60).toString().padStart(2, '0');
-        const winTime = document.getElementById('win-time');
-        if(winTime) winTime.textContent = `${minutes}:${seconds}`;
-    }
-    
+    function isOverlapping(rect1, rect2) { const margin = 8; return !(rect1.right - margin < rect2.left + margin || rect1.left + margin > rect2.right - margin || rect1.bottom - margin < rect2.top + margin || rect1.top + margin > rect2.bottom - margin); }
+    function updateTimer() { const now = new Date(); const elapsed = Math.floor((now - startTime) / 1000); const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0'); const seconds = (elapsed % 60).toString().padStart(2, '0'); const winTime = document.getElementById('win-time'); if (winTime) winTime.textContent = `${minutes}:${seconds}`; }
     function dropSquare(square, index) {
-        const blueRectangle = document.getElementById('blue-rectangle');
-        if (!blueRectangle) { console.error("blue-rectangle not found!"); return; }
+        const blueRectangle = document.getElementById('blue-rectangle'); if (!blueRectangle) { console.error("blue-rectangle not found!"); return; }
         if (squaresInBlue.length >= 7) { showLoseScreen(); return; }
-        
-        const initialRotation = square.dataset.rotation || 0;
-        const finalRotation = Math.random() * 360;
-        const startRect = square.getBoundingClientRect();
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) { console.error("game-container not found!"); return; }
-        const containerRect = gameContainer.getBoundingClientRect();
-        const blueRect = blueRectangle.getBoundingClientRect();
-        const startX = startRect.left - containerRect.left;
-        const startY = startRect.top - containerRect.top;
-        const endX = blueRect.left - containerRect.left + (squaresInBlue.length * (blueRectangle.clientWidth / 7)) - startX;
-        const endY = blueRect.top - containerRect.top + (blueRectangle.clientHeight / 2) - (square.clientHeight / 2) - startY;
-        square.style.setProperty('--initial-rotation', `${initialRotation}deg`);
-        square.style.setProperty('--final-rotation', `${finalRotation}deg`);
-        square.style.setProperty('--start-x', '0px');
-        square.style.setProperty('--start-y', '0px');
-        square.style.setProperty('--end-x', `${endX}px`);
-        square.style.setProperty('--end-y', `${endY}px`);
-        square.classList.add('sliding-to-blue');
+        const initialRotation = square.dataset.rotation || 0; const finalRotation = Math.random() * 360; const startRect = square.getBoundingClientRect(); const gameContainer = document.getElementById('game-container'); if (!gameContainer) { console.error("game-container not found!"); return; }
+        const containerRect = gameContainer.getBoundingClientRect(); const blueRect = blueRectangle.getBoundingClientRect(); const startX = startRect.left - containerRect.left; const startY = startRect.top - containerRect.top; const endX = blueRect.left - containerRect.left + (squaresInBlue.length * (blueRectangle.clientWidth / 7)) - startX; const endY = blueRect.top - containerRect.top + (blueRectangle.clientHeight / 2) - (square.clientHeight / 2) - startY;
+        square.style.setProperty('--initial-rotation', `${initialRotation}deg`); square.style.setProperty('--final-rotation', `${finalRotation}deg`); square.style.setProperty('--start-x', '0px'); square.style.setProperty('--start-y', '0px'); square.style.setProperty('--end-x', `${endX}px`); square.style.setProperty('--end-y', `${endY}px`); square.classList.add('sliding-to-blue');
         setTimeout(() => {
-            const squareInBlue = document.createElement('div');
-            squareInBlue.className = 'square-in-blue';
-            squareInBlue.style.backgroundImage = square.style.backgroundImage;
-            squareInBlue.dataset.image = square.dataset.image;
-            squareInBlue.dataset.name = square.dataset.name;
-            squareInBlue.style.opacity = '0';
-            squareInBlue.style.transform = 'scale(0.5) rotate(90deg)';
-            blueRectangle.appendChild(squareInBlue);
-            setTimeout(() => {
-                squareInBlue.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                squareInBlue.style.opacity = '1';
-                squareInBlue.style.transform = 'scale(1) rotate(0deg)';
-            }, 10);
-            squaresInBlue.push(squareInBlue);
-            square.style.display = 'none';
-            square.classList.remove('sliding-to-blue');
-            updateCoveredSquares();
-            checkAndRemoveMatchingSquares();
+            const squareInBlue = document.createElement('div'); squareInBlue.className = 'square-in-blue'; squareInBlue.style.backgroundImage = square.style.backgroundImage; squareInBlue.dataset.image = square.dataset.image; squareInBlue.dataset.name = square.dataset.name; squareInBlue.style.opacity = '0'; squareInBlue.style.transform = 'scale(0.5) rotate(90deg)'; blueRectangle.appendChild(squareInBlue);
+            setTimeout(() => { squareInBlue.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; squareInBlue.style.opacity = '1'; squareInBlue.style.transform = 'scale(1) rotate(0deg)'; }, 10);
+            squaresInBlue.push(squareInBlue); square.style.display = 'none'; square.classList.remove('sliding-to-blue'); updateCoveredSquares(); checkAndRemoveMatchingSquares();
         }, 500);
     }
-    
     function checkAndRemoveMatchingSquares() {
-        const imageCount = {};
-        squaresInBlue.forEach(square => {
-            const image = square.dataset.image;
-            imageCount[image] = (imageCount[image] || 0) + 1;
-        });
-        for (const image in imageCount) {
-            if (imageCount[image] >= 3) {
-                const matchingSquares = [];
-                squaresInBlue.forEach((square, index) => {
-                    if (square.dataset.image === image) { matchingSquares.push({ square, index }); }
-                });
-                removeMatchingSquares(matchingSquares.slice(0, 3), image);
-                return true;
-            }
-        }
-        return false;
+        const imageCount = {}; squaresInBlue.forEach(square => { const image = square.dataset.image; imageCount[image] = (imageCount[image] || 0) + 1; });
+        for (const image in imageCount) { if (imageCount[image] >= 3) { const matchingSquares = []; squaresInBlue.forEach((square, index) => { if (square.dataset.image === image) { matchingSquares.push({ square, index }); } }); removeMatchingSquares(matchingSquares.slice(0, 3), image); return true; } } return false;
     }
-    
     function removeMatchingSquares(matchingSquares, image) {
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) { console.error("game-container not found for match effect!"); return; }
-        const effect = document.createElement('div');
-        effect.className = 'match-effect';
-        gameContainer.appendChild(effect);
-        const firstSquareRect = matchingSquares[0].square.getBoundingClientRect();
-        const containerRect = gameContainer.getBoundingClientRect();
-        effect.style.left = `${firstSquareRect.left + firstSquareRect.width/2 - containerRect.left}px`;
-        effect.style.top = `${firstSquareRect.top + firstSquareRect.height/2 - containerRect.top}px`;
-        matchingSquares.forEach(({ square }) => {
-            square.classList.add('fast-disappear');
-            setTimeout(() => { if (square.parentNode) { square.parentNode.removeChild(square); } }, 300);
-        });
+        const gameContainer = document.getElementById('game-container'); if (!gameContainer) { console.error("game-container not found for match effect!"); return; }
+        const effect = document.createElement('div'); effect.className = 'match-effect'; gameContainer.appendChild(effect); const firstSquareRect = matchingSquares[0].square.getBoundingClientRect(); const containerRect = gameContainer.getBoundingClientRect(); effect.style.left = `${firstSquareRect.left + firstSquareRect.width / 2 - containerRect.left}px`; effect.style.top = `${firstSquareRect.top + firstSquareRect.height / 2 - containerRect.top}px`;
+        matchingSquares.forEach(({ square }) => { square.classList.add('fast-disappear'); setTimeout(() => { if (square.parentNode) { square.parentNode.removeChild(square); } }, 300); });
         squaresInBlue = squaresInBlue.filter(square => !matchingSquares.some(ms => ms.square === square));
-        setTimeout(() => {
-            const blueRectangle = document.getElementById('blue-rectangle');
-            if (!blueRectangle) return;
-            const children = Array.from(blueRectangle.children);
-            children.forEach((child, index) => {
-                child.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                child.style.transform = `translateX(${index * 5}px)`;
-            });
-            setTimeout(() => {
-                children.forEach(child => {
-                    child.style.transition = 'transform 0.3s ease';
-                    child.style.transform = 'translateX(0)';
-                });
-            }, 500);
-            checkGameEnd();
-        }, 350);
+        setTimeout(() => { const blueRectangle = document.getElementById('blue-rectangle'); if (!blueRectangle) return; const children = Array.from(blueRectangle.children); children.forEach((child, index) => { child.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; child.style.transform = `translateX(${index * 5}px)`; }); setTimeout(() => { children.forEach(child => { child.style.transition = 'transform 0.3s ease'; child.style.transform = 'translateX(0)'; }); }, 500); checkGameEnd(); }, 350);
     }
-    
     function checkGameEnd() {
         const remainingSquares = squares.filter(square => square.style.display !== 'none' && !square.classList.contains('sliding-to-blue'));
-        if (remainingSquares.length === 0 && squaresInBlue.length === 0) {
-            showWinScreen();
-        } else if (squaresInBlue.length >= 7) {
-            const imageCount = {};
-            squaresInBlue.forEach(square => {
-                const image = square.dataset.image;
-                imageCount[image] = (imageCount[image] || 0) + 1;
-            });
-            let hasMatch = false;
-            for (const image in imageCount) { if (imageCount[image] >= 3) { hasMatch = true; break; } }
-            if (!hasMatch) { showLoseScreen(); }
-        }
+        if (remainingSquares.length === 0 && squaresInBlue.length === 0) { showWinScreen(); }
+        else if (squaresInBlue.length >= 7) { const imageCount = {}; squaresInBlue.forEach(square => { const image = square.dataset.image; imageCount[image] = (imageCount[image] || 0) + 1; }); let hasMatch = false; for (const image in imageCount) { if (imageCount[image] >= 3) { hasMatch = true; break; } } if (!hasMatch) { showLoseScreen(); } }
     }
-    
-    async function showWinScreen() { 
-        clearInterval(timerInterval);
-        const elapsed = Math.floor((new Date() - startTime) / 1000);
-        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-        const seconds = (elapsed % 60).toString().padStart(2, '0');
-        const winTime = document.getElementById('win-time');
-        if(winTime) winTime.textContent = `${minutes}:${seconds}`;
-        
-        const winScreen = document.getElementById('win-screen');
-        if(winScreen) {
-            winScreen.style.display = 'block';
-            winScreen.style.opacity = '0';
-            winScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
-            setTimeout(() => {
-                winScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                winScreen.style.opacity = '1';
-                winScreen.style.transform = 'scale(1) translate(-50%, -50%)';
-            }, 10);
-        }
-        try {
-            await addToLeaderboard(playerName, playerAvatar, elapsed); 
-        } catch (e) {
-            console.error('Error in addToLeaderboard call from showWinScreen:', e);
-        }
-        const playerInfoDiv = document.getElementById('player-info');
-        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
-        const exitBtn = document.getElementById('exit-button');
-        if(exitBtn) exitBtn.style.display = 'none';
+    async function showWinScreen() {
+        clearInterval(timerInterval); const elapsed = Math.floor((new Date() - startTime) / 1000); const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0'); const seconds = (elapsed % 60).toString().padStart(2, '0'); const winTime = document.getElementById('win-time'); if (winTime) winTime.textContent = `${minutes}:${seconds}`;
+        const winScreen = document.getElementById('win-screen'); if (winScreen) { winScreen.style.display = 'block'; winScreen.style.opacity = '0'; winScreen.style.transform = 'scale(0.8) translate(-50%, -50%)'; setTimeout(() => { winScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; winScreen.style.opacity = '1'; winScreen.style.transform = 'scale(1) translate(-50%, -50%)'; }, 10); }
+        try { await addToLeaderboard(playerName, playerAvatar, elapsed); } catch (e) { console.error('Error in addToLeaderboard call from showWinScreen:', e); }
+        const playerInfoDiv = document.getElementById('player-info'); if (playerInfoDiv) playerInfoDiv.style.display = 'none'; const exitBtn = document.getElementById('exit-button'); if (exitBtn) exitBtn.style.display = 'none';
     }
-    
     function showLoseScreen() {
-        clearInterval(timerInterval);
-        const loseScreen = document.getElementById('lose-screen');
-        if(loseScreen){
-            loseScreen.style.display = 'block';
-            loseScreen.style.opacity = '0';
-            loseScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
-            setTimeout(() => {
-                loseScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                loseScreen.style.opacity = '1';
-                loseScreen.style.transform = 'scale(1) translate(-50%, -50%)';
-            }, 10);
-        }
-        const playerInfoDiv = document.getElementById('player-info');
-        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
-        const exitBtn = document.getElementById('exit-button');
-        if(exitBtn) exitBtn.style.display = 'none';
+        clearInterval(timerInterval); const loseScreen = document.getElementById('lose-screen'); if (loseScreen) { loseScreen.style.display = 'block'; loseScreen.style.opacity = '0'; loseScreen.style.transform = 'scale(0.8) translate(-50%, -50%)'; setTimeout(() => { loseScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'; loseScreen.style.opacity = '1'; loseScreen.style.transform = 'scale(1) translate(-50%, -50%)'; }, 10); }
+        const playerInfoDiv = document.getElementById('player-info'); if (playerInfoDiv) playerInfoDiv.style.display = 'none'; const exitBtn = document.getElementById('exit-button'); if (exitBtn) exitBtn.style.display = 'none';
     }
-    
     function backToMainMenu() {
-        clearInterval(timerInterval);
-        gameStarted = false;
-        document.querySelectorAll('.result-screen, .profile-screen, .leaderboard-screen').forEach(screen => {
-            screen.style.display = 'none';
-        });
-        const blueRect = document.getElementById('blue-rectangle');
-        if(blueRect) blueRect.style.display = 'none';
-        const squaresCont = document.getElementById('squares-container');
-        if(squaresCont) squaresCont.style.display = 'none';
-        const playerInfoDiv = document.getElementById('player-info');
-        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
-        const exitBtn = document.getElementById('exit-button');
-        if(exitBtn) exitBtn.style.display = 'none';
-        
-        squares.forEach(square => {
-            if (square.parentNode) { square.parentNode.removeChild(square); }
-        });
-        squares = [];
-        squaresInBlue = [];
-        const blueRectangleDOM = document.getElementById('blue-rectangle');
-        if (blueRectangleDOM) { blueRectangleDOM.innerHTML = ''; }
-        
-        const mainMenu = document.getElementById('main-menu');
-        if(mainMenu) mainMenu.style.display = 'flex';
+        clearInterval(timerInterval); gameStarted = false; document.querySelectorAll('.result-screen, .profile-screen, .leaderboard-screen').forEach(screen => { screen.style.display = 'none'; });
+        const blueRect = document.getElementById('blue-rectangle'); if (blueRect) blueRect.style.display = 'none'; const squaresCont = document.getElementById('squares-container'); if (squaresCont) squaresCont.style.display = 'none'; const playerInfoDiv = document.getElementById('player-info'); if (playerInfoDiv) playerInfoDiv.style.display = 'none'; const exitBtn = document.getElementById('exit-button'); if (exitBtn) exitBtn.style.display = 'none';
+        squares.forEach(square => { if (square.parentNode) { square.parentNode.removeChild(square); } }); squares = []; squaresInBlue = []; const blueRectangleDOM = document.getElementById('blue-rectangle'); if (blueRectangleDOM) { blueRectangleDOM.innerHTML = ''; }
+        const mainMenu = document.getElementById('main-menu'); if (mainMenu) mainMenu.style.display = 'flex';
     }
-    
-    function showProfileScreen() {
-        const mainMenu = document.getElementById('main-menu');
-        if(mainMenu) mainMenu.style.display = 'none';
-        const profileScreen = document.getElementById('profile-screen');
-        if(profileScreen) profileScreen.style.display = 'flex';
-    }
-    
+    function showProfileScreen() { const mainMenu = document.getElementById('main-menu'); if (mainMenu) mainMenu.style.display = 'none'; const profileScreen = document.getElementById('profile-screen'); if (profileScreen) profileScreen.style.display = 'flex'; }
     function saveProfile() {
-        const nameInput = document.getElementById('player-name');
-        if (!nameInput || !nameInput.value.trim()) { 
-            alert('الرجاء إدخال اسم اللاعب');
-            return;
-        }
-        const oldName = playerName;
-        playerName = nameInput.value.trim();
-        localStorage.setItem('playerName', playerName);
-        localStorage.setItem('playerAvatar', playerAvatar);
-        
-        const playerNameDisplay = document.getElementById('player-name-display');
-        if(playerNameDisplay) playerNameDisplay.textContent = playerName;
-        const playerAvatarImg = document.getElementById('player-avatar');
-        if (playerAvatar && playerAvatarImg) {
-            playerAvatarImg.src = playerAvatar;
-        }
-        if (oldName !== playerName) {
-            updateLeaderboardWithNewName(oldName, playerName);
-        }
-        backToMainMenu();
+        const nameInput = document.getElementById('player-name'); if (!nameInput || !nameInput.value.trim()) { alert('الرجاء إدخال اسم اللاعب'); return; }
+        const oldName = playerName; playerName = nameInput.value.trim(); localStorage.setItem('playerName', playerName); localStorage.setItem('playerAvatar', playerAvatar);
+        const playerNameDisplay = document.getElementById('player-name-display'); if (playerNameDisplay) playerNameDisplay.textContent = playerName; const playerAvatarImg = document.getElementById('player-avatar'); if (playerAvatar && playerAvatarImg) { playerAvatarImg.src = playerAvatar; }
+        if (oldName !== playerName) { updateLeaderboardWithNewName(oldName, playerName); } backToMainMenu();
     }
-    
     function updateLeaderboardWithNewName(oldName, newName) {
         console.log(`Player name changed from ${oldName} to ${newName}. New scores will use the new name.`);
-        leaderboard.forEach(player => {
-            if (player.playerName === oldName) {
-                player.playerName = newName; 
-            }
-        });
-        updateLeaderboard(); 
+        leaderboard.forEach(player => { if (player.playerName === oldName) { player.playerName = newName; } }); updateLeaderboard();
     }
-    
-    async function addToLeaderboard(name, avatar, time) {
-        const currentKsaDate = getCurrentKsaDateString();
-        console.log(`Adding to leaderboard: ${name}, ${time}, Date: ${currentKsaDate}`);
+    async function addToLeaderboard(name, avatar, timeInSeconds) {
+        const currentKsaDate = getCurrentKsaDateString(); console.log(`Adding to leaderboard: Player: ${name}, Avatar: ${avatar}, Time: ${timeInSeconds}, Date: ${currentKsaDate}`);
+        if (!name || name.trim() === "") { console.error("Player name is empty. Cannot save score."); alert("اسم اللاعب فارغ. لا يمكن حفظ النتيجة."); return; }
         try {
-            const scoresCol = fb.collection(db, 'leaderboard_scores');
-            const q = fb.query(scoresCol, 
-                              fb.where('playerName', '==', name), 
-                              fb.where('ksaDate', '==', currentKsaDate));
-            const querySnapshot = await fb.getDocs(q);
-            let existingDocId = null;
-            let existingScoreTime = Infinity;
-            querySnapshot.forEach((doc) => {
-                existingDocId = doc.id;
-                existingScoreTime = doc.data().scoreTime;
-            });
-            if (existingDocId) { 
-                if (time < existingScoreTime) { 
-                    console.log(`Updating score for ${name}`);
-                    const docRef = fb.doc(db, 'leaderboard_scores', existingDocId);
-                    await fb.updateDoc(docRef, {
-                        scoreTime: time,
-                        playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', 
-                        createdAt: fb.serverTimestamp() 
-                    });
-                    console.log('Score updated successfully.');
-                } else {
-                    console.log(`New score for ${name} is not better than existing score.`);
-                    leaderboard = await loadLeaderboardData(); 
-                    updateLeaderboard();
-                    return; 
-                }
-            } else { 
-                console.log(`Adding new score for ${name}`);
-                await fb.addDoc(scoresCol, {
-                    playerName: name,
-                    playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', 
-                    scoreTime: time,
-                    ksaDate: currentKsaDate,
-                    createdAt: fb.serverTimestamp()
-                });
-                console.log('New score added successfully.');
-            }
-            leaderboard = await loadLeaderboardData(); 
-            updateLeaderboard();
-        } catch (error) {
-            console.error('Error adding to leaderboard in Firestore:', error);
-            alert('حدث خطأ أثناء حفظ نتيجتك. يرجى المحاولة مرة أخرى.');
-        }
+            const scoresCol = fb.collection(db, 'leaderboard_scores'); const q = fb.query(scoresCol, fb.where('playerName', '==', name), fb.where('ksaDate', '==', currentKsaDate));
+            const querySnapshot = await fb.getDocs(q); let existingDocId = null; let existingScoreTime = Infinity;
+            querySnapshot.forEach((doc) => { existingDocId = doc.id; existingScoreTime = doc.data().scoreTime; });
+            if (existingDocId) { if (timeInSeconds < existingScoreTime) { console.log(`Updating score for ${name}`); const docRef = fb.doc(db, 'leaderboard_scores', existingDocId); await fb.updateDoc(docRef, { scoreTime: timeInSeconds, playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', createdAt: fb.serverTimestamp() }); console.log('Score updated successfully.'); } else { console.log(`New score for ${name} is not better. No update.`); await loadLeaderboardData(); updateLeaderboard(); return; } }
+            else { console.log(`Adding new score for ${name}`); await fb.addDoc(scoresCol, { playerName: name, playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', scoreTime: timeInSeconds, ksaDate: currentKsaDate, createdAt: fb.serverTimestamp() }); console.log('New score added successfully.'); }
+            await loadLeaderboardData(); updateLeaderboard();
+        } catch (error) { console.error('Error adding to leaderboard in Firestore:', error); alert('حدث خطأ أثناء حفظ نتيجتك. يرجى المحاولة مرة أخرى.'); }
     }
-    
     function updateLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboard-list');
-        if(!leaderboardList) { console.error("leaderboard-list not found!"); return; }
-        leaderboardList.innerHTML = '';
-        const topPlayers = leaderboard.slice(0, 10); 
+        const leaderboardList = document.getElementById('leaderboard-list'); if (!leaderboardList) { console.error("leaderboard-list not found!"); return; }
+        leaderboardList.innerHTML = ''; const topPlayers = leaderboard.slice(0, 10);
         topPlayers.forEach((player, index) => {
-            const item = document.createElement('div');
-            item.className = 'leaderboard-item';
-            item.innerHTML = \`
-                <div class="leaderboard-rank">\${index + 1}</div>
-                <img class="leaderboard-avatar" src="\${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
+            const item = document.createElement('div'); item.className = 'leaderboard-item';
+            item.innerHTML = `
+                <div class="leaderboard-rank">${index + 1}</div>
+                <img class="leaderboard-avatar" src="${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
                 <div class="leaderboard-info">
-                    <div class="leaderboard-name">\${player.playerName}</div>
-                    <div class="leaderboard-time">\${formatTime(player.scoreTime)}</div>
+                    <div class="leaderboard-name">${player.playerName}</div>
+                    <div class="leaderboard-time">${formatTime(player.scoreTime)}</div>
                 </div>
-            \`;
-            leaderboardList.appendChild(item);
+            `; leaderboardList.appendChild(item);
         });
     }
-    
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const secs = (seconds % 60).toString().padStart(2, '0');
-        return `${mins}:${secs}`;
-    }
-    
-    async function showLeaderboard() { 
+    function formatTime(seconds) { const mins = Math.floor(seconds / 60).toString().padStart(2, '0'); const secs = (seconds % 60).toString().padStart(2, '0'); return `${mins}:${secs}`; }
+    async function showLeaderboard() {
         try {
-            leaderboard = await loadLeaderboardData(); 
-            updateLeaderboard();
-            const mainMenu = document.getElementById('main-menu');
-            if(mainMenu) mainMenu.style.display = 'none';
-            const leaderboardScreen = document.getElementById('leaderboard-screen');
-            if(leaderboardScreen) leaderboardScreen.style.display = 'flex';
-        } catch (error) {
-            console.error("Failed to show leaderboard due to error in loading data:", error);
-            leaderboard = []; 
-            updateLeaderboard(); 
-            const mainMenu = document.getElementById('main-menu');
-            if(mainMenu) mainMenu.style.display = 'none';
-            const leaderboardScreen = document.getElementById('leaderboard-screen');
-            if(leaderboardScreen) leaderboardScreen.style.display = 'flex';
-        }
+            await loadLeaderboardData(); updateLeaderboard();
+            const mainMenu = document.getElementById('main-menu'); if (mainMenu) mainMenu.style.display = 'none'; const leaderboardScreen = document.getElementById('leaderboard-screen'); if (leaderboardScreen) leaderboardScreen.style.display = 'flex';
+        } catch (error) { console.error("Failed to show leaderboard due to error in loading data:", error); leaderboard = []; updateLeaderboard(); const mainMenu = document.getElementById('main-menu'); if (mainMenu) mainMenu.style.display = 'none'; const leaderboardScreen = document.getElementById('leaderboard-screen'); if (leaderboardScreen) leaderboardScreen.style.display = 'flex'; }
     }
-    
-    window.addEventListener('load', () => {
-        initGame();
-    });
+    window.addEventListener('load', () => { initGame(); });
+    // Expose functions needed by HTML onclick attributes to the global scope
+    window.startGame = startGame;
+    window.backToMainMenu = backToMainMenu;
+    window.saveProfile = saveProfile;
+    window.showLeaderboard = showLeaderboard; // Added for robustness, was global before
+    window.initGame = initGame; // Ensure it's global for the load event if there were issues
+    window.showProfileScreen = showProfileScreen; // Ensure this is also exposed if used by onclick
+
     </script>
 </body>
 </html>

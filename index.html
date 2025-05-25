@@ -1,246 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game</title>
+    <title>جمل مجنون - نسخة محسنة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #ff9a3c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f8f1e5;
+            --card-color: #fff9f0;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+        body { margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; overflow: hidden; direction: rtl; user-select: none; background-color: var(--bg-color); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        #game-container { position: relative; width: 100%; max-width: 500px; height: 100vh; max-height: 900px; margin: 0 auto; background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%); overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.1); border-radius: 10px; }
+        #blue-rectangle { position: absolute; bottom: 5%; left: 5%; right: 5%; height: 10%; background: linear-gradient(145deg, #3a5f94 0%, #5a7fb5 100%); border-radius: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.2); border: 3px solid rgba(255,255,255,0.2); padding: 0 10px; will-change: transform; z-index: 100; }
+        #squares-container { position: absolute; width: 90%; max-width: 350px; height: 50%; max-height: 450px; bottom: calc(20% + 10% + 30px); left: 50%; transform: translateX(-50%); background-color: rgba(255,255,255,0.2); border-radius: 15px; backdrop-filter: blur(5px); border: 2px dashed rgba(0,0,0,0.1); will-change: contents; display: none; touch-action: manipulation; }
+        .square { position: absolute; width: 12vw; max-width: 60px; height: 12vw; max-height: 60px; border-radius: 12px; cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 1; box-shadow: 3px 3px 10px rgba(0,0,0,0.3); border: 3px solid rgba(255,255,255,0.4); background-size: 80%; background-repeat: no-repeat; background-position: center; background-color: var(--card-color); transform-origin: center; will-change: transform, opacity; backface-visibility: hidden; perspective: 1000px; touch-action: manipulation; }
+        .square::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%); border-radius: 9px; pointer-events: none; }
+        .square.covered::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); border-radius: 9px; pointer-events: none; }
+        @keyframes shake { 0% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-5px) rotate(-2deg); } 50% { transform: translateX(5px) rotate(2deg); } 75% { transform: translateX(-5px) rotate(-2deg); } 100% { transform: translateX(0) rotate(0deg); } }
+        .shake { animation: shake 0.4s ease-in-out; }
+        .square-in-blue { position: relative; width: 12vw; max-width: 60px; height: 12vw; max-height: 60px; border-radius: 12px; margin: 0 5px; transition: all 0.15s cubic-bezier(0.68, -0.55, 0.265, 1.55); border: 3px solid rgba(255,255,255,0.4); box-shadow: 3px 3px 10px rgba(0,0,0,0.3); background-size: 80%; background-repeat: no-repeat; background-position: center; background-color: var(--card-color); transform-origin: center; will-change: transform; }
+        .square-in-blue::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%); border-radius: 9px; pointer-events: none; }
+        #start-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 45px; font-size: 26px; font-weight: 700; background: linear-gradient(145deg, var(--secondary-color) 0%, var(--accent-color) 100%); color: white; border: none; border-radius: 15px; cursor: pointer; z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); text-shadow: 1px 1px 2px rgba(0,0,0,0.3); letter-spacing: 1px; will-change: transform; }
+        #start-button:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 15px 25px rgba(0,0,0,0.4); background: linear-gradient(145deg, #ff8a2c 0%, #ff5b5b 100%); }
+        #profile-button { position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); padding: 15px 30px; font-size: 20px; font-weight: 700; background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%); color: white; border: none; border-radius: 15px; cursor: pointer; z-index: 1000; box-shadow: 0 8px 15px rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); text-shadow: 1px 1px 2px rgba(0,0,0,0.2); letter-spacing: 1px; will-change: transform; }
+        #profile-button:hover { transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 12px 20px rgba(0,0,0,0.3); background: linear-gradient(145deg, #3a5f94 0%, #4a6fa5 100%); }
+        #leaderboard-button { position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); padding: 15px 30px; font-size: 20px; font-weight: 700; background: linear-gradient(145deg, #4CAF50 0%, #2E7D32 100%); color: white; border: none; border-radius: 15px; cursor: pointer; z-index: 1000; box-shadow: 0 8px 15px rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); text-shadow: 1px 1px 2px rgba(0,0,0,0.2); letter-spacing: 1px; will-change: transform; }
+        #leaderboard-button:hover { transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 12px 20px rgba(0,0,0,0.3); background: linear-gradient(145deg, #3a8c3f 0%, #1B5E20 100%); }
+        .result-screen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(245,245,245,0.98) 100%); padding: 8%; border-radius: 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.3); z-index: 100; display: none; width: 85%; max-width: 350px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.5); will-change: transform; }
+        #win-screen h2 { color: #4CAF50; font-size: 8vw; max-font-size: 40px; margin-bottom: 15px; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
+        #lose-screen h2 { color: #F44336; font-size: 8vw; max-font-size: 40px; margin-bottom: 15px; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
+        .result-screen p { font-size: 5vw; max-font-size: 22px; color: #555; margin-bottom: 5px; }
+        button { background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%); color: white; border: none; padding: 15px 30px; font-size: 5vw; max-font-size: 22px; border-radius: 12px; cursor: pointer; margin-top: 20px; box-shadow: 0 6px 12px rgba(0,0,0,0.2); transition: all 0.3s ease; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); letter-spacing: 1px; will-change: transform; }
+        button:hover { background: linear-gradient(145deg, #3a5f94 0%, #4a6fa5 100%); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        @keyframes slideToBlue { 0% { transform: translate(var(--start-x), var(--start-y)) rotate(var(--initial-rotation)) scale(1); opacity: 1; } 100% { transform: translate(var(--end-x), var(--end-y)) rotate(var(--final-rotation)) scale(1); opacity: 1; } }
+        .sliding-to-blue { animation: slideToBlue 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; z-index: 1000 !important; pointer-events: none; }
+        @keyframes disappear { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.2) rotate(180deg); opacity: 0.7; } 100% { transform: scale(0) rotate(360deg); opacity: 0; } }
+        .fast-disappear { animation: disappear 0.3s cubic-bezier(0.36, 0, 0.66, -0.56) forwards !important; z-index: 1001; }
+        .square.highlight { box-shadow: 0 0 15px 5px rgba(255,215,0,0.7); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 5px 2px rgba(255,215,0,0.5); } 50% { box-shadow: 0 0 20px 10px rgba(255,215,0,0.9); } 100% { box-shadow: 0 0 5px 2px rgba(255,215,0,0.5); } }
+        .match-effect { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; transform: scale(0); opacity: 0; animation: matchEffect 0.6s ease-out; pointer-events: none; z-index: 1002; }
+        @keyframes matchEffect { 0% { transform: scale(0); opacity: 0.8; } 100% { transform: scale(3); opacity: 0; } }
+        .profile-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .profile-form { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 90%; max-width: 400px; position: relative; overflow: hidden; }
+        .profile-form::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 10px; background: linear-gradient(90deg, #4a6fa5 0%, #ff9a3c 50%, #ff6b6b 100%); }
+        .profile-form h2 { color: var(--primary-color); text-align: center; margin-bottom: 20px; font-size: 24px; position: relative; padding-bottom: 10px; }
+        .profile-form h2::after { content: ''; position: absolute; bottom: 0; left: 25%; right: 25%; height: 3px; background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%); }
+        .form-group { margin-bottom: 20px; position: relative; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .form-group input { width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; transition: all 0.3s; font-family: 'Tajawal', sans-serif; }
+        .form-group input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(74,111,165,0.2); }
+        #avatar-preview { width: 120px; height: 120px; border-radius: 50%; background-color: #f0f0f0; margin: 0 auto 20px; overflow: hidden; border: 4px solid var(--primary-color); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; position: relative; }
+        #avatar-preview:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        #avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        #avatar-preview span { text-align: center; padding: 10px; color: #666; font-size: 14px; }
+        #avatar-upload { display: none; }
+        .profile-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .profile-buttons button { flex: 1; margin: 0; padding: 12px; }
+        .profile-buttons button:first-child { background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%); }
+        .profile-buttons button:last-child { background: linear-gradient(145deg, #f44336 0%, #d32f2f 100%); }
+        .leaderboard-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%); z-index: 2000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .leaderboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .leaderboard-header h2 { color: var(--primary-color); font-size: 24px; }
+        .leaderboard-item { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s; }
+        .leaderboard-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .leaderboard-avatar { width: 50px; height: 50px; border-radius: 50%; margin-left: 15px; object-fit: cover; border: 2px solid var(--primary-color); }
+        .leaderboard-info { flex: 1; }
+        .leaderboard-name { font-weight: bold; margin-bottom: 5px; }
+        .leaderboard-time { color: #666; font-size: 14px; }
+        .leaderboard-rank { background: var(--primary-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; margin-left: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .back-button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 20px; align-self: center; transition: all 0.3s; }
+        .back-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .main-menu { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%); z-index: 1000; }
+        .game-title { font-size: 2.5rem; font-weight: 900; color: var(--primary-color); margin-bottom: 2rem; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); position: absolute; top: 15%; left: 50%; transform: translateX(-50%); }
+        #player-info { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; z-index: 100; }
+        #player-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--primary-color); object-fit: cover; margin-bottom: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        #player-name-display { font-size: 18px; font-weight: 700; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        #exit-button { position: absolute; top: 5%; left: 5%; background: none; color: #333; border: none; padding: 10px; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); z-index: 100; display: none; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
+        #exit-button:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
+        #win-screen { text-align: center; }
+        #win-screen h2 { margin-bottom: 5px; }
+        #win-screen p.time-label { margin-top: 15px; font-weight: bold; color: var(--primary-color); font-size: 18px; }
+        #win-screen p.time-value { font-size: 24px; color: #333; margin-bottom: 20px; font-weight: bold; }
+        #play-again-button { background: linear-gradient(145deg, #4CAF50 0%, #2E7D32 100%); margin-bottom: 10px; }
+        #play-again-button:hover { background: linear-gradient(145deg, #3a8c3f 0%, #1B5E20 100%); }
+        @media (min-width: 768px) { .square, .square-in-blue { width: 55px; height: 55px; } #start-button { font-size: 28px; padding: 22px 50px; } #profile-button, #leaderboard-button { font-size: 22px; padding: 18px 36px; } #win-screen h2, #lose-screen h2 { font-size: 36px; } button { font-size: 22px; padding: 18px 36px; } #squares-container { max-width: 400px; max-height: 550px; } }
+    </style>
 </head>
 <body>
-    <h1>Game</h1>
-    <!-- Game content would go here -->
-
+    <div id="game-container">
+        <!-- الصفحة الرئيسية -->
+        <div class="main-menu" id="main-menu">
+            <h1 class="game-title">جمل مجنون</h1>
+            <button id="start-button">ابدأ اللعب</button>
+            <button id="profile-button">الملف الشخصي</button>
+            <button id="leaderboard-button">لوحة الصدارة</button>
+        </div>
+        <!-- عناصر اللعبة -->
+        <button id="exit-button">←</button>
+        <div id="player-info">
+            <img id="player-avatar" src="https://i.imgur.com/8Km9tLL.png" alt="صورة اللاعب">
+            <div id="player-name-display">اللاعب</div>
+        </div>
+        <div id="blue-rectangle"></div>
+        <div id="squares-container"></div>
+        <!-- شاشات النتائج -->
+        <div id="win-screen" class="result-screen">
+            <h2>🎉 مبروك لقد فزت!</h2>
+            <p class="time-label">الوقت المستغرق:</p>
+            <p class="time-value"><span id="win-time">00:00</span></p>
+            <button id="play-again-button" onclick="startGame()">العب مجدداً</button>
+            <button onclick="backToMainMenu()">العودة للصفحة الرئيسية</button>
+        </div>
+        <div id="lose-screen" class="result-screen">
+            <h2>😢 لقد خسرت!</h2>
+            <p>حاول مرة أخرى!</p>
+            <button onclick="backToMainMenu()">العودة للصفحة الرئيسية</button>
+        </div>
+        <!-- صفحة الملف الشخصي - تم التحديث -->
+        <div id="profile-screen" class="profile-screen">
+            <div class="profile-form">
+                <h2>الملف الشخصي</h2>
+                <div id="avatar-preview" onclick="document.getElementById('avatar-upload').click()">
+                    <span>اضغط لاختيار صورة</span>
+                </div>
+                <input type="file" id="avatar-upload" accept="image/*">
+                <div class="form-group">
+                    <label for="player-name">اسم اللاعب</label>
+                    <input type="text" id="player-name" placeholder="أدخل اسمك">
+                </div>
+                <div class="profile-buttons">
+                    <button onclick="saveProfile()">حفظ</button>
+                    <button onclick="backToMainMenu()">إلغاء</button>
+                </div>
+            </div>
+        </div>
+        <!-- لوحة الصدارة -->
+        <div id="leaderboard-screen" class="leaderboard-screen">
+            <div class="leaderboard-header">
+                <h2>أفضل الأوقات</h2>
+                <button class="back-button" onclick="backToMainMenu()">رجوع</button>
+            </div>
+            <div id="leaderboard-list"></div>
+        </div>
+    </div>
     <script type="module">
-        // Firebase SDK imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, where, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    // Firebase SDK imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, where, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-        // User's Firebase configuration
-        const firebaseConfig = {
-          apiKey: "AIzaSyDDC6Ux27mPtu4Fn1rGgqyuC0uD3PrmGPs",
-          authDomain: "skloz-9392f.firebaseapp.com",
-          projectId: "skloz-9392f",
-          storageBucket: "skloz-9392f.firebasestorage.app",
-          messagingSenderId: "457319200318",
-          appId: "1:457319200318:web:97321b2df3532796b6836f",
-          measurementId: "G-LBEE8GNWZM"
-        };
+    // User's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDC6Ux27mPtu4Fn1rGgqyuC0uD3PrmGPs",
+      authDomain: "skloz-9392f.firebaseapp.com",
+      projectId: "skloz-9392f",
+      storageBucket: "skloz-9392f.firebasestorage.app",
+      messagingSenderId: "457319200318",
+      appId: "1:457319200318:web:97321b2df3532796b6836f",
+      measurementId: "G-LBEE8GNWZM"
+    };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app); // Firestore instance
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app); // Firestore instance
 
-        // Make db and other necessary Firebase functions globally accessible 
-        // if needed by other parts of the script, or pass them around.
-        // For simplicity with existing code structure, we can attach them to window for now.
-        window.db = db;
-        window.fb = {
-            collection,
-            getDocs,
-            addDoc,
-            query,
-            orderBy,
-            limit,
-            where,
-            doc,
-            updateDoc,
-            serverTimestamp
-        };
+    window.db = db;
+    window.fb = {
+        collection,
+        getDocs,
+        addDoc,
+        query,
+        orderBy,
+        limit,
+        where,
+        doc,
+        updateDoc,
+        serverTimestamp
+    };
 
-        // The rest of the existing game code will follow here...
-        // تحسين الصور باستخدام صور عالية الجودة مع خلفيات شفافة
-        const images = [
-            { name: 'جوهرة', url: 'https://i.imgur.com/AjPTyZC.png' },
-            { name: 'نعناع', url: 'https://i.imgur.com/O3nvXac.png' },
-            { name: 'حليب', url: 'https://i.imgur.com/ifJb1W5.png' },
-            { name: 'جزر', url: 'https://i.imgur.com/prC9PT2.png' },
-            { name: 'قفاز', url: 'https://i.imgur.com/1UEmBN5.png' },
-            { name: 'جورب', url: 'https://i.imgur.com/cV25GC9.png' },
-            { name: 'جبن', url: 'https://i.imgur.com/nc8njcj.png' },
-            { name: 'لحم', url: 'https://i.imgur.com/jQvWLPZ.png' },
-            { name: 'قطن', url: 'https://i.imgur.com/VcJHy4z.png' },
-            { name: 'قبعة', url: 'https://i.imgur.com/FHjeX0s.png' }
-        ];
-        
-        // تحميل الصور مسبقًا لتحسين الأداء
-        function preloadImages() {
-            images.forEach(img => {
-                const image = new Image();
-                image.src = img.url;
-            });
+    const images = [
+        { name: 'جوهرة', url: 'https://i.imgur.com/AjPTyZC.png' },
+        { name: 'نعناع', url: 'https://i.imgur.com/O3nvXac.png' },
+        { name: 'حليب', url: 'https://i.imgur.com/ifJb1W5.png' },
+        { name: 'جزر', url: 'https://i.imgur.com/prC9PT2.png' },
+        { name: 'قفاز', url: 'https://i.imgur.com/1UEmBN5.png' },
+        { name: 'جورب', url: 'https://i.imgur.com/cV25GC9.png' },
+        { name: 'جبن', url: 'https://i.imgur.com/nc8njcj.png' },
+        { name: 'لحم', url: 'https://i.imgur.com/jQvWLPZ.png' },
+        { name: 'قطن', url: 'https://i.imgur.com/VcJHy4z.png' },
+        { name: 'قبعة', url: 'https://i.imgur.com/FHjeX0s.png' }
+    ];
+    
+    function preloadImages() {
+        images.forEach(img => {
+            const image = new Image();
+            image.src = img.url;
+        });
+    }
+
+    function getCurrentKsaDateString() {
+        const now = new Date();
+        const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+        const year = ksaTime.getUTCFullYear();
+        const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = ksaTime.getUTCDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function isLocalStorageAvailable() {
+        let storage;
+        try {
+            storage = window.localStorage;
+            const x = '__storage_test__';
+            storage.setItem(x, x);
+            storage.removeItem(x);
+            return true;
+        } catch (e) {
+            return e instanceof DOMException && (
+                e.code === 22 ||
+                e.code === 1014 ||
+                e.name === 'QuotaExceededError' ||
+                e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+                (storage && storage.length !== 0);
         }
-
-        function getCurrentKsaDateString() {
-            const now = new Date();
-            // Create a date object for KSA time by adding 3 hours (in milliseconds)
-            const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-            
-            // Now extract year, month, day from ksaTime in UTC to avoid local timezone interference
-            const year = ksaTime.getUTCFullYear();
-            const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
-            const day = ksaTime.getUTCDate().toString().padStart(2, '0');
-            
-            return `${year}-${month}-${day}`;
-        }
-
-        function isLocalStorageAvailable() {
-            let storage;
-            try {
-                storage = window.localStorage;
-                const x = '__storage_test__';
-                storage.setItem(x, x);
-                storage.removeItem(x);
-                return true;
-            } catch (e) {
-                return e instanceof DOMException && (
-                    // everything except Firefox
-                    e.code === 22 ||
-                    // Firefox
-                    e.code === 1014 ||
-                    // test name field too, because code might not be present
-                    // everything except Firefox
-                    e.name === 'QuotaExceededError' ||
-                    // Firefox
-                    e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
-                    // acknowledge QuotaExceededError only if there's something already stored
-                    (storage && storage.length !== 0);
-            }
-        }
-        
-        let squares = [];
-        let squaresInBlue = [];
-        let gameStarted = false;
-        let startTime;
-        let timerInterval;
-        let playerName = localStorage.getItem('playerName') || '';
-        let playerAvatar = localStorage.getItem('playerAvatar') || '';
-        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-        
-        // محاكاة قاعدة بيانات بسيطة لمشاركة النتائج بين المستخدمين
-        // const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // مثال فقط، يجب استبداله بخادم حقيقي
-        
-        // دالة لتحميل لوحة الصدارة من الخادم
-        async function loadLeaderboardData() {
-            const currentKsaDate = getCurrentKsaDateString();
-            console.log(`Loading leaderboard for date: ${currentKsaDate}`);
-            try {
-                const scoresCol = fb.collection(db, 'leaderboard_scores');
-                const q = fb.query(scoresCol, 
-                                  fb.where('ksaDate', '==', currentKsaDate), 
-                                  fb.orderBy('scoreTime', 'asc'), 
-                                  fb.limit(10));
-                const querySnapshot = await fb.getDocs(q);
-                const dailyScores = [];
-                querySnapshot.forEach((doc) => {
-                    // Use doc.data().fieldName for accessing fields
-                    dailyScores.push({ 
-                        id: doc.id, 
-                        playerName: doc.data().playerName, 
-                        playerAvatar: doc.data().playerAvatar, 
-                        scoreTime: doc.data().scoreTime,
-                        ksaDate: doc.data().ksaDate 
-                        // Add other fields if necessary, like createdAt
-                    });
+    }
+    
+    let squares = [];
+    let squaresInBlue = [];
+    let gameStarted = false;
+    let startTime;
+    let timerInterval;
+    let playerName = localStorage.getItem('playerName') || '';
+    let playerAvatar = localStorage.getItem('playerAvatar') || '';
+    let leaderboard = []; 
+    
+    async function loadLeaderboardData() {
+        const currentKsaDate = getCurrentKsaDateString();
+        console.log(`Loading leaderboard for date: ${currentKsaDate}`);
+        try {
+            const scoresCol = fb.collection(db, 'leaderboard_scores');
+            const q = fb.query(scoresCol, 
+                              fb.where('ksaDate', '==', currentKsaDate), 
+                              fb.orderBy('scoreTime', 'asc'), 
+                              fb.limit(10));
+            const querySnapshot = await fb.getDocs(q);
+            const dailyScores = [];
+            querySnapshot.forEach((doc) => {
+                dailyScores.push({ 
+                    id: doc.id, 
+                    playerName: doc.data().playerName, 
+                    playerAvatar: doc.data().playerAvatar, 
+                    scoreTime: doc.data().scoreTime,
+                    ksaDate: doc.data().ksaDate 
                 });
-                console.log('Fetched scores:', dailyScores);
-                return dailyScores;
-            } catch (error) {
-                console.error('Error loading leaderboard from Firestore:', error);
-                // Optional: Display a user-friendly error message on the UI
-                alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.');
-                return []; // Return empty array in case of error
-            }
+            });
+            console.log('Fetched scores:', dailyScores);
+            return dailyScores;
+        } catch (error) {
+            console.error('Error loading leaderboard from Firestore:', error);
+            alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.');
+            return []; 
         }
-
-        /*
-        async function loadLeaderboardFromServer() {
-            try {
-                // في التطبيق الحقيقي، استخدم fetch لاسترجاع البيانات من الخادم
-                // const response = await fetch(SERVER_URL);
-                // const data = await response.json();
-                
-                // هنا نستخدم localStorage كمثال فقط
-                const savedLeaderboard = localStorage.getItem('sharedLeaderboard');
-                if (savedLeaderboard) {
-                    const parsed = JSON.parse(savedLeaderboard);
-                    // التحقق من صلاحية البيانات (24 ساعة)
-                    const now = new Date();
-                    if (parsed.expiry && new Date(parsed.expiry) > now) {
-                        return parsed.data;
-                    }
-                }
-                return [];
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-                return [];
-            }
-        }
-        */
+    }
+    
+    async function initGame() { 
+        preloadImages();
         
-        // دالة لحفظ لوحة الصدارة على الخادم (الآن تحفظ محليًا مع تاريخ KSA)
-        // function saveLeaderboardData(scoresArray) { // This function is no longer needed with Firestore
-        //     const ksaDate = getCurrentKsaDateString();
-        //     const dataToStore = {
-        //         ksaDate: ksaDate,
-        //         scores: scoresArray
-        //     };
-        //     try {
-        //         localStorage.setItem('gameLeaderboardData', JSON.stringify(dataToStore));
-        //         // If setItem succeeds, success alert was removed.
-        //     } catch (e) {
-        //         // If any error during stringify or setItem, error alert was removed.
-        //         console.error('Failed to save leaderboard:', e, dataToStore); // For internal logging, user won't see console.
-        //     }
-        // }
+        const gameContainer = document.getElementById('game-container');
+        const blueRectangle = document.getElementById('blue-rectangle');
+        const startButton = document.getElementById('start-button');
+        const profileButton = document.getElementById('profile-button');
+        const leaderboardButton = document.getElementById('leaderboard-button');
+        const mainMenu = document.getElementById('main-menu');
+        const exitButton = document.getElementById('exit-button');
+        const playerInfo = document.getElementById('player-info');
+        const squaresContainer = document.getElementById('squares-container');
 
-        /*
-        async function saveLeaderboardToServer(data) {
-            try {
-                // في التطبيق الحقيقي، استخدم fetch لإرسال البيانات للخادم
-                // const response = await fetch(SERVER_URL, {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify(data)
-                // });
-                
-                // هنا نستخدم localStorage كمثال فقط
-                const now = new Date();
-                const expiry = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 ساعة من الآن
-                
-                const toSave = {
-                    data: data,
-                    expiry: expiry.toISOString()
-                };
-                
-                localStorage.setItem('sharedLeaderboard', JSON.stringify(toSave));
-                return true;
-            } catch (error) {
-                console.error('Error saving leaderboard:', error);
-                return false;
+        if (!isLocalStorageAvailable()) {
+            let warningDiv = document.getElementById('storage-warning');
+            if (!warningDiv) {
+                warningDiv = document.createElement('div');
+                warningDiv.id = 'storage-warning';
+                if(gameContainer) gameContainer.appendChild(warningDiv);
             }
-        }
-        */
-        
-        async function initGame() { // Made async
-            preloadImages();
-            
-            const gameContainer = document.getElementById('game-container');
-            const blueRectangle = document.getElementById('blue-rectangle');
-            const startButton = document.getElementById('start-button');
-            const profileButton = document.getElementById('profile-button');
-            const leaderboardButton = document.getElementById('leaderboard-button');
-            const mainMenu = document.getElementById('main-menu');
-            const exitButton = document.getElementById('exit-button');
-            const playerInfo = document.getElementById('player-info');
-            
-            const squaresContainer = document.getElementById('squares-container');
-
-            if (!isLocalStorageAvailable()) {
-                let warningDiv = document.getElementById('storage-warning');
-                if (!warningDiv) {
-                    warningDiv = document.createElement('div');
-                    warningDiv.id = 'storage-warning';
-                    gameContainer.appendChild(warningDiv);
-                }
+            if(warningDiv){ 
                 warningDiv.textContent = "تحذير: مساحة تخزين المتصفح غير متاحة. لن يتم حفظ نتائج لوحة الصدارة.";
                 warningDiv.style.position = 'fixed';
                 warningDiv.style.top = '10px';
@@ -253,703 +301,614 @@
                 warningDiv.style.zIndex = '2000';
                 warningDiv.style.textAlign = 'center';
             }
-            
-            // إخفاء عناصر اللعبة عند البدء
-            blueRectangle.style.display = 'none';
-            squaresContainer.style.display = 'none';
-            playerInfo.style.display = 'none';
-            exitButton.style.display = 'none';
-            
-            // عرض الصفحة الرئيسية
-            mainMenu.style.display = 'flex';
-            
-            // أحداث الأزرار
-            startButton.addEventListener('click', () => {
-                if (!playerName) {
-                    showProfileScreen();
-                    return;
-                }
-                startGame();
-                mainMenu.style.display = 'none';
-            });
-            
-            profileButton.addEventListener('click', () => {
+        }
+        
+        if(blueRectangle) blueRectangle.style.display = 'none';
+        if(squaresContainer) squaresContainer.style.display = 'none';
+        if(playerInfo) playerInfo.style.display = 'none';
+        if(exitButton) exitButton.style.display = 'none';
+        if(mainMenu) mainMenu.style.display = 'flex';
+        
+        if(startButton) startButton.addEventListener('click', () => {
+            if (!playerName) {
                 showProfileScreen();
-            });
-            
-            leaderboardButton.addEventListener('click', () => {
-                showLeaderboard();
-            });
-            
-            exitButton.addEventListener('click', () => {
-                backToMainMenu();
-            });
-            
-            // تهيئة تحميل الصورة
-            document.getElementById('avatar-upload').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const avatarPreview = document.getElementById('avatar-preview');
-                        avatarPreview.innerHTML = `<img src="${event.target.result}" alt="صورة اللاعب">`;
-                        playerAvatar = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // إذا كان هناك ملف شخصي محفوظ، عرضه
-            if (playerAvatar) {
-                const avatarPreview = document.getElementById('avatar-preview');
-                avatarPreview.innerHTML = `<img src="${playerAvatar}" alt="صورة اللاعب">`;
-                document.getElementById('player-avatar').src = playerAvatar;
-            }
-            
-            if (playerName) {
-                document.getElementById('player-name').value = playerName;
-                document.getElementById('player-name-display').textContent = playerName;
-            }
-            
-            // تحميل لوحة الصدارة من الخادم عند البدء
-            try {
-                leaderboard = await loadLeaderboardData(); // Use await
-                // Optionally, update UI here if needed immediately after load in initGame
-                // updateLeaderboard(); // If you want to display it right away
-            } catch (err) {
-                console.error("Failed to load leaderboard during initGame:", err);
-                leaderboard = []; // Ensure leaderboard is an empty array on failure
-            }
-        }
-        
-        function startGame() {
-            clearInterval(timerInterval); // Added: Clear any existing timer
-
-            gameStarted = true;
-            
-            // إعداد عناصر اللعبة (UI elements setup)
-            document.getElementById('win-screen').style.display = 'none'; // Added: Hide win screen
-            document.getElementById('lose-screen').style.display = 'none'; // Added: Hide lose screen
-            document.getElementById('blue-rectangle').style.display = 'flex';
-            document.getElementById('squares-container').style.display = 'block';
-            document.getElementById('player-info').style.display = 'flex';
-            document.getElementById('exit-button').style.display = 'block';
-            
-            // مسح المربعات القديمة إن وجدت (Clear old squares if any)
-            squares.forEach(square => {
-                if (square.parentNode) {
-                    square.parentNode.removeChild(square);
-                }
-            });
-            squares = [];
-            squaresInBlue = [];
-
-            // Added: Clear children of blue-rectangle
-            const blueRectangleDOM = document.getElementById('blue-rectangle');
-            if (blueRectangleDOM) { 
-                blueRectangleDOM.innerHTML = '';
-            }
-            
-            // إنشاء المربعات الجديدة (Create new squares)
-            const squaresContainer = document.getElementById('squares-container');
-            const containerWidth = squaresContainer.clientWidth;
-            const containerHeight = squaresContainer.clientHeight;
-            const squareSize = Math.min(containerWidth, containerHeight) * 0.12;
-            
-            const shuffledImages = [...images];
-            for (let i = shuffledImages.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
-            }
-            
-            for (let i = 0; i < 180; i++) {
-                const square = document.createElement('div');
-                square.className = 'square';
-                const imageIndex = Math.floor(i / 18);
-                const image = shuffledImages[imageIndex % shuffledImages.length];
-                square.style.backgroundImage = `url(${image.url})`;
-                square.dataset.image = image.url;
-                square.dataset.name = image.name;
-                
-                let posX, posY;
-                let attempts = 0;
-                const maxAttempts = 10;
-                
-                do {
-                    const col = Math.floor(Math.random() * 10);
-                    const row = Math.floor(Math.random() * 10);
-                    
-                    posX = col * (containerWidth / 10) + (Math.random() * 20 - 10);
-                    posY = row * (containerHeight / 10) + (Math.random() * 20 - 10);
-                    attempts++;
-                } while (isPositionOverlapping(posX, posY, squareSize, squares) && attempts < maxAttempts);
-                
-                square.style.left = Math.max(0, Math.min(containerWidth - squareSize, posX)) + 'px';
-                square.style.top = Math.max(0, Math.min(containerHeight - squareSize, posY)) + 'px';
-                
-                const randomRotation = Math.random() * 30 - 15;
-                square.dataset.rotation = randomRotation;
-                square.style.transform = `rotate(${randomRotation}deg)`;
-                
-                square.style.zIndex = 100 - i;
-                square.dataset.coveredBy = JSON.stringify([]);
-                
-                squaresContainer.appendChild(square);
-                squares.push(square);
-            }
-            
-            startTime = new Date();
-            timerInterval = setInterval(updateTimer, 1000);
-            
-            // عرض المربعات مع تأثير متدرج
-            squares.forEach((square, index) => {
-                setTimeout(() => {
-                    square.style.opacity = '0';
-                    square.style.transform = `rotate(${square.dataset.rotation}deg) scale(0.5)`;
-                    
-                    setTimeout(() => {
-                        square.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                        square.style.opacity = '1';
-                        square.style.transform = `rotate(${square.dataset.rotation}deg) scale(1)`;
-                    }, 10);
-                }, index * 20);
-            });
-            
-            setTimeout(() => {
-                updateCoveredSquares();
-                
-                squares.forEach((square, index) => {
-                    const handleHover = () => {
-                        if (gameStarted) {
-                            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-                            if (coveredBy.length === 0) {
-                                const originalRotation = square.dataset.rotation || '0';
-                                square.style.transition = 'transform 0.2s ease';
-                                square.style.transform = `rotate(${originalRotation}deg) scale(1.15)`;
-                                square.style.boxShadow = '4px 4px 12px rgba(0, 0, 0, 0.5)';
-                                square.style.zIndex = 1000;
-                            }
-                        }
-                    };
-                    
-                    const handleHoverEnd = () => {
-                        const originalRotation = square.dataset.rotation || '0';
-                        square.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                        square.style.transform = `rotate(${originalRotation}deg) scale(1)`;
-                        square.style.boxShadow = '3px 3px 10px rgba(0, 0, 0, 0.3)';
-                        square.style.zIndex = 100 - index;
-                    };
-                    
-                    square.addEventListener('mouseenter', handleHover);
-                    square.addEventListener('mouseleave', handleHoverEnd);
-                    
-                    // إصلاح مشكلة الضغط على المربعات
-                    square.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        handleSquareClick(square, index);
-                    });
-                    
-                    square.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        handleSquareClick(square, index);
-                    }, { passive: false });
-                });
-            }, 500);
-        }
-        
-        function isPositionOverlapping(x, y, size, existingSquares) {
-            for (const square of existingSquares) {
-                const rect = square.getBoundingClientRect();
-                const distance = Math.sqrt(Math.pow(x - parseFloat(square.style.left), 2) + 
-                                          Math.pow(y - parseFloat(square.style.top), 2));
-                
-                if (distance < size * 1.2) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        
-        function handleSquareClick(square, index) {
-            if (!gameStarted) return;
-            
-            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-            if (coveredBy.length === 0) {
-                dropSquare(square, index);
-            } else {
-                square.classList.add('shake');
-                setTimeout(() => {
-                    square.classList.remove('shake');
-                }, 400);
-            }
-        }
-        
-        function updateCoveredSquares() {
-            requestAnimationFrame(() => {
-                squares.forEach(square => {
-                    square.dataset.coveredBy = JSON.stringify([]);
-                });
-                
-                for (let i = 0; i < squares.length; i++) {
-                    if ( squares[i].style.display === 'none') continue;
-                    
-                    const rect1 = squares[i].getBoundingClientRect();
-                    
-                    for (let j = i + 1; j < squares.length; j++) {
-                        if (squares[j].style.display === 'none') continue;
-                        
-                        const rect2 = squares[j].getBoundingClientRect();
-                        
-                        if (isOverlapping(rect1, rect2)) {
-                            if (parseInt(squares[i].style.zIndex) < parseInt(squares[j].style.zIndex)) {
-                                const coveredByList = JSON.parse(squares[i].dataset.coveredBy || '[]');
-                                if (!coveredByList.includes(j)) {
-                                    coveredByList.push(j);
-                                    squares[i].dataset.coveredBy = JSON.stringify(coveredByList);
-                                }
-                            } else {
-                                const coveredByList = JSON.parse(squares[j].dataset.coveredBy || '[]');
-                                if (!coveredByList.includes(i)) {
-                                    coveredByList.push(i);
-                                    squares[j].dataset.coveredBy = JSON.stringify(coveredByList);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                squares.forEach(square => {
-                    const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-                    if (coveredBy.length > 0) {
-                        if (!square.classList.contains('covered')) {
-                            square.style.transition = 'box-shadow 0.3s ease';
-                            square.classList.add('covered');
-                        }
-                    } else {
-                        if (square.classList.contains('covered')) {
-                            square.style.transition = 'box-shadow 0.3s ease';
-                            square.classList.remove('covered');
-                        }
-                    }
-                });
-                
-                checkGameEnd();
-            });
-        }
-        
-        function isOverlapping(rect1, rect2) {
-            const margin = 8;
-            return !(
-                rect1.right - margin < rect2.left + margin ||
-                rect1.left + margin > rect2.right - margin ||
-                rect1.bottom - margin < rect2.top + margin ||
-                rect1.top + margin > rect2.bottom - margin
-            );
-        }
-        
-        function updateTimer() {
-            const now = new Date();
-            const elapsed = Math.floor((now - startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-            const seconds = (elapsed % 60).toString().padStart(2, '0');
-            document.getElementById('win-time').textContent = `${minutes}:${seconds}`;
-        }
-        
-        function dropSquare(square, index) {
-            if (squaresInBlue.length >= 7) {
-                showLoseScreen();
                 return;
             }
-            
-            const blueRectangle = document.getElementById('blue-rectangle');
-            const initialRotation = square.dataset.rotation || 0;
-            const finalRotation = Math.random() * 360;
-            
-            const startRect = square.getBoundingClientRect();
-            const containerRect = document.getElementById('game-container').getBoundingClientRect();
-            const blueRect = blueRectangle.getBoundingClientRect();
-            
-            const startX = startRect.left - containerRect.left;
-            const startY = startRect.top - containerRect.top;
-            
-            const endX = blueRect.left - containerRect.left + (squaresInBlue.length * (blueRectangle.clientWidth / 7)) - startX;
-            const endY = blueRect.top - containerRect.top + (blueRectangle.clientHeight / 2) - (square.clientHeight / 2) - startY;
-            
-            square.style.setProperty('--initial-rotation', `${initialRotation}deg`);
-            square.style.setProperty('--final-rotation', `${finalRotation}deg`);
-            square.style.setProperty('--start-x', '0px');
-            square.style.setProperty('--start-y', '0px');
-            square.style.setProperty('--end-x', `${endX}px`);
-            square.style.setProperty('--end-y', `${endY}px`);
-            square.classList.add('sliding-to-blue');
-            
-            setTimeout(() => {
-                const squareInBlue = document.createElement('div');
-                squareInBlue.className = 'square-in-blue';
-                squareInBlue.style.backgroundImage = square.style.backgroundImage;
-                squareInBlue.dataset.image = square.dataset.image;
-                squareInBlue.dataset.name = square.dataset.name;
-                
-                squareInBlue.style.opacity = '0';
-                squareInBlue.style.transform = 'scale(0.5) rotate(90deg)';
-                blueRectangle.appendChild(squareInBlue);
-                
-                setTimeout(() => {
-                    squareInBlue.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                    squareInBlue.style.opacity = '1';
-                    squareInBlue.style.transform = 'scale(1) rotate(0deg)';
-                }, 10);
-                
-                squaresInBlue.push(squareInBlue);
-                square.style.display = 'none';
-                square.classList.remove('sliding-to-blue');
-                
-                updateCoveredSquares();
-                checkAndRemoveMatchingSquares();
-            }, 500);
+            startGame();
+            if(mainMenu) mainMenu.style.display = 'none';
+        });
+        
+        if(profileButton) profileButton.addEventListener('click', () => {
+            showProfileScreen();
+        });
+        
+        if(leaderboardButton) leaderboardButton.addEventListener('click', () => {
+            showLeaderboard();
+        });
+        
+        if(exitButton) exitButton.addEventListener('click', () => {
+            backToMainMenu();
+        });
+        
+        const avatarUpload = document.getElementById('avatar-upload');
+        if(avatarUpload) avatarUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const avatarPreview = document.getElementById('avatar-preview');
+                    if(avatarPreview) avatarPreview.innerHTML = `<img src="${event.target.result}" alt="صورة اللاعب">`;
+                    playerAvatar = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        if (playerAvatar) {
+            const avatarPreview = document.getElementById('avatar-preview');
+            if(avatarPreview) avatarPreview.innerHTML = `<img src="${playerAvatar}" alt="صورة اللاعب">`;
+            const playerAvatarImg = document.getElementById('player-avatar');
+            if(playerAvatarImg) playerAvatarImg.src = playerAvatar;
         }
         
-        function checkAndRemoveMatchingSquares() {
-            const imageCount = {};
+        if (playerName) {
+            const playerNameInput = document.getElementById('player-name');
+            if(playerNameInput) playerNameInput.value = playerName;
+            const playerNameDisplay = document.getElementById('player-name-display');
+            if(playerNameDisplay) playerNameDisplay.textContent = playerName;
+        }
+        
+        try {
+            leaderboard = await loadLeaderboardData(); 
+        } catch (err) {
+            console.error("Failed to load leaderboard during initGame:", err);
+            leaderboard = []; 
+        }
+    }
+    
+    function startGame() {
+        clearInterval(timerInterval); 
+        gameStarted = true;
+        
+        const winScreen = document.getElementById('win-screen');
+        if(winScreen) winScreen.style.display = 'none'; 
+        const loseScreen = document.getElementById('lose-screen');
+        if(loseScreen) loseScreen.style.display = 'none'; 
+        
+        const blueRect = document.getElementById('blue-rectangle');
+        if(blueRect) blueRect.style.display = 'flex';
+        const squaresCont = document.getElementById('squares-container');
+        if(squaresCont) squaresCont.style.display = 'block';
+        const playerInfoDiv = document.getElementById('player-info');
+        if(playerInfoDiv) playerInfoDiv.style.display = 'flex';
+        const exitBtn = document.getElementById('exit-button');
+        if(exitBtn) exitBtn.style.display = 'block';
+        
+        squares.forEach(square => {
+            if (square.parentNode) {
+                square.parentNode.removeChild(square);
+            }
+        });
+        squares = [];
+        squaresInBlue = [];
+
+        const blueRectangleDOM = document.getElementById('blue-rectangle');
+        if (blueRectangleDOM) { 
+            blueRectangleDOM.innerHTML = '';
+        }
+        
+        const squaresContainer = document.getElementById('squares-container');
+        if (!squaresContainer) { console.error("squares-container not found!"); return; }
+
+        const containerWidth = squaresContainer.clientWidth;
+        const containerHeight = squaresContainer.clientHeight;
+        const squareSize = Math.min(containerWidth, containerHeight) * 0.12;
+        
+        const shuffledImages = [...images];
+        for (let i = shuffledImages.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
+        }
+        
+        for (let i = 0; i < 180; i++) {
+            const square = document.createElement('div');
+            square.className = 'square';
+            const imageIndex = Math.floor(i / 18);
+            const image = shuffledImages[imageIndex % shuffledImages.length];
+            square.style.backgroundImage = `url(${image.url})`;
+            square.dataset.image = image.url;
+            square.dataset.name = image.name;
             
+            let posX, posY;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            do {
+                const col = Math.floor(Math.random() * 10);
+                const row = Math.floor(Math.random() * 10);
+                
+                posX = col * (containerWidth / 10) + (Math.random() * 20 - 10);
+                posY = row * (containerHeight / 10) + (Math.random() * 20 - 10);
+                attempts++;
+            } while (isPositionOverlapping(posX, posY, squareSize, squares) && attempts < maxAttempts);
+            
+            square.style.left = Math.max(0, Math.min(containerWidth - squareSize, posX)) + 'px';
+            square.style.top = Math.max(0, Math.min(containerHeight - squareSize, posY)) + 'px';
+            
+            const randomRotation = Math.random() * 30 - 15;
+            square.dataset.rotation = randomRotation;
+            square.style.transform = `rotate(${randomRotation}deg)`;
+            
+            square.style.zIndex = 100 - i;
+            square.dataset.coveredBy = JSON.stringify([]);
+            
+            squaresContainer.appendChild(square);
+            squares.push(square);
+        }
+        
+        startTime = new Date();
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        squares.forEach((square, index) => {
+            setTimeout(() => {
+                square.style.opacity = '0';
+                square.style.transform = `rotate(${square.dataset.rotation}deg) scale(0.5)`;
+                
+                setTimeout(() => {
+                    square.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    square.style.opacity = '1';
+                    square.style.transform = `rotate(${square.dataset.rotation}deg) scale(1)`;
+                }, 10);
+            }, index * 20);
+        });
+        
+        setTimeout(() => {
+            updateCoveredSquares();
+            
+            squares.forEach((square, index) => {
+                const handleHover = () => {
+                    if (gameStarted) {
+                        const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+                        if (coveredBy.length === 0) {
+                            const originalRotation = square.dataset.rotation || '0';
+                            square.style.transition = 'transform 0.2s ease';
+                            square.style.transform = `rotate(${originalRotation}deg) scale(1.15)`;
+                            square.style.boxShadow = '4px 4px 12px rgba(0, 0, 0, 0.5)';
+                            square.style.zIndex = 1000;
+                        }
+                    }
+                };
+                
+                const handleHoverEnd = () => {
+                    const originalRotation = square.dataset.rotation || '0';
+                    square.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    square.style.transform = `rotate(${originalRotation}deg) scale(1)`;
+                    square.style.boxShadow = '3px 3px 10px rgba(0, 0, 0, 0.3)';
+                    square.style.zIndex = 100 - index;
+                };
+                
+                square.addEventListener('mouseenter', handleHover);
+                square.addEventListener('mouseleave', handleHoverEnd);
+                
+                square.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleSquareClick(square, index);
+                });
+                
+                square.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handleSquareClick(square, index);
+                }, { passive: false });
+            });
+        }, 500);
+    }
+    
+    function isPositionOverlapping(x, y, size, existingSquares) {
+        for (const square of existingSquares) {
+            const rect = square.getBoundingClientRect();
+            const distance = Math.sqrt(Math.pow(x - parseFloat(square.style.left), 2) + 
+                                      Math.pow(y - parseFloat(square.style.top), 2));
+            if (distance < size * 1.2) { return true; }
+        }
+        return false;
+    }
+    
+    function handleSquareClick(square, index) {
+        if (!gameStarted) return;
+        const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+        if (coveredBy.length === 0) {
+            dropSquare(square, index);
+        } else {
+            square.classList.add('shake');
+            setTimeout(() => { square.classList.remove('shake'); }, 400);
+        }
+    }
+    
+    function updateCoveredSquares() {
+        requestAnimationFrame(() => {
+            squares.forEach(square => { square.dataset.coveredBy = JSON.stringify([]); });
+            for (let i = 0; i < squares.length; i++) {
+                if ( squares[i].style.display === 'none') continue;
+                const rect1 = squares[i].getBoundingClientRect();
+                for (let j = i + 1; j < squares.length; j++) {
+                    if (squares[j].style.display === 'none') continue;
+                    const rect2 = squares[j].getBoundingClientRect();
+                    if (isOverlapping(rect1, rect2)) {
+                        if (parseInt(squares[i].style.zIndex) < parseInt(squares[j].style.zIndex)) {
+                            const coveredByList = JSON.parse(squares[i].dataset.coveredBy || '[]');
+                            if (!coveredByList.includes(j)) {
+                                coveredByList.push(j);
+                                squares[i].dataset.coveredBy = JSON.stringify(coveredByList);
+                            }
+                        } else {
+                            const coveredByList = JSON.parse(squares[j].dataset.coveredBy || '[]');
+                            if (!coveredByList.includes(i)) {
+                                coveredByList.push(i);
+                                squares[j].dataset.coveredBy = JSON.stringify(coveredByList);
+                            }
+                        }
+                    }
+                }
+            }
+            squares.forEach(square => {
+                const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+                if (coveredBy.length > 0) {
+                    if (!square.classList.contains('covered')) {
+                        square.style.transition = 'box-shadow 0.3s ease';
+                        square.classList.add('covered');
+                    }
+                } else {
+                    if (square.classList.contains('covered')) {
+                        square.style.transition = 'box-shadow 0.3s ease';
+                        square.classList.remove('covered');
+                    }
+                }
+            });
+            checkGameEnd();
+        });
+    }
+    
+    function isOverlapping(rect1, rect2) {
+        const margin = 8;
+        return !(rect1.right - margin < rect2.left + margin || rect1.left + margin > rect2.right - margin || rect1.bottom - margin < rect2.top + margin || rect1.top + margin > rect2.bottom - margin);
+    }
+    
+    function updateTimer() {
+        const now = new Date();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        const winTime = document.getElementById('win-time');
+        if(winTime) winTime.textContent = `${minutes}:${seconds}`;
+    }
+    
+    function dropSquare(square, index) {
+        const blueRectangle = document.getElementById('blue-rectangle');
+        if (!blueRectangle) { console.error("blue-rectangle not found!"); return; }
+        if (squaresInBlue.length >= 7) { showLoseScreen(); return; }
+        
+        const initialRotation = square.dataset.rotation || 0;
+        const finalRotation = Math.random() * 360;
+        const startRect = square.getBoundingClientRect();
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) { console.error("game-container not found!"); return; }
+        const containerRect = gameContainer.getBoundingClientRect();
+        const blueRect = blueRectangle.getBoundingClientRect();
+        const startX = startRect.left - containerRect.left;
+        const startY = startRect.top - containerRect.top;
+        const endX = blueRect.left - containerRect.left + (squaresInBlue.length * (blueRectangle.clientWidth / 7)) - startX;
+        const endY = blueRect.top - containerRect.top + (blueRectangle.clientHeight / 2) - (square.clientHeight / 2) - startY;
+        square.style.setProperty('--initial-rotation', `${initialRotation}deg`);
+        square.style.setProperty('--final-rotation', `${finalRotation}deg`);
+        square.style.setProperty('--start-x', '0px');
+        square.style.setProperty('--start-y', '0px');
+        square.style.setProperty('--end-x', `${endX}px`);
+        square.style.setProperty('--end-y', `${endY}px`);
+        square.classList.add('sliding-to-blue');
+        setTimeout(() => {
+            const squareInBlue = document.createElement('div');
+            squareInBlue.className = 'square-in-blue';
+            squareInBlue.style.backgroundImage = square.style.backgroundImage;
+            squareInBlue.dataset.image = square.dataset.image;
+            squareInBlue.dataset.name = square.dataset.name;
+            squareInBlue.style.opacity = '0';
+            squareInBlue.style.transform = 'scale(0.5) rotate(90deg)';
+            blueRectangle.appendChild(squareInBlue);
+            setTimeout(() => {
+                squareInBlue.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                squareInBlue.style.opacity = '1';
+                squareInBlue.style.transform = 'scale(1) rotate(0deg)';
+            }, 10);
+            squaresInBlue.push(squareInBlue);
+            square.style.display = 'none';
+            square.classList.remove('sliding-to-blue');
+            updateCoveredSquares();
+            checkAndRemoveMatchingSquares();
+        }, 500);
+    }
+    
+    function checkAndRemoveMatchingSquares() {
+        const imageCount = {};
+        squaresInBlue.forEach(square => {
+            const image = square.dataset.image;
+            imageCount[image] = (imageCount[image] || 0) + 1;
+        });
+        for (const image in imageCount) {
+            if (imageCount[image] >= 3) {
+                const matchingSquares = [];
+                squaresInBlue.forEach((square, index) => {
+                    if (square.dataset.image === image) { matchingSquares.push({ square, index }); }
+                });
+                removeMatchingSquares(matchingSquares.slice(0, 3), image);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    function removeMatchingSquares(matchingSquares, image) {
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) { console.error("game-container not found for match effect!"); return; }
+        const effect = document.createElement('div');
+        effect.className = 'match-effect';
+        gameContainer.appendChild(effect);
+        const firstSquareRect = matchingSquares[0].square.getBoundingClientRect();
+        const containerRect = gameContainer.getBoundingClientRect();
+        effect.style.left = `${firstSquareRect.left + firstSquareRect.width/2 - containerRect.left}px`;
+        effect.style.top = `${firstSquareRect.top + firstSquareRect.height/2 - containerRect.top}px`;
+        matchingSquares.forEach(({ square }) => {
+            square.classList.add('fast-disappear');
+            setTimeout(() => { if (square.parentNode) { square.parentNode.removeChild(square); } }, 300);
+        });
+        squaresInBlue = squaresInBlue.filter(square => !matchingSquares.some(ms => ms.square === square));
+        setTimeout(() => {
+            const blueRectangle = document.getElementById('blue-rectangle');
+            if (!blueRectangle) return;
+            const children = Array.from(blueRectangle.children);
+            children.forEach((child, index) => {
+                child.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                child.style.transform = `translateX(${index * 5}px)`;
+            });
+            setTimeout(() => {
+                children.forEach(child => {
+                    child.style.transition = 'transform 0.3s ease';
+                    child.style.transform = 'translateX(0)';
+                });
+            }, 500);
+            checkGameEnd();
+        }, 350);
+    }
+    
+    function checkGameEnd() {
+        const remainingSquares = squares.filter(square => square.style.display !== 'none' && !square.classList.contains('sliding-to-blue'));
+        if (remainingSquares.length === 0 && squaresInBlue.length === 0) {
+            showWinScreen();
+        } else if (squaresInBlue.length >= 7) {
+            const imageCount = {};
             squaresInBlue.forEach(square => {
                 const image = square.dataset.image;
                 imageCount[image] = (imageCount[image] || 0) + 1;
             });
-            
-            for (const image in imageCount) {
-                if (imageCount[image] >= 3) {
-                    const matchingSquares = [];
-                    squaresInBlue.forEach((square, index) => {
-                        if (square.dataset.image === image) {
-                            matchingSquares.push({ square, index });
-                        }
-                    });
-                    
-                    removeMatchingSquares(matchingSquares.slice(0, 3), image);
-                    return true;
-                }
-            }
-            
-            return false;
+            let hasMatch = false;
+            for (const image in imageCount) { if (imageCount[image] >= 3) { hasMatch = true; break; } }
+            if (!hasMatch) { showLoseScreen(); }
         }
+    }
+    
+    async function showWinScreen() { 
+        clearInterval(timerInterval);
+        const elapsed = Math.floor((new Date() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        const winTime = document.getElementById('win-time');
+        if(winTime) winTime.textContent = `${minutes}:${seconds}`;
         
-        function removeMatchingSquares(matchingSquares, image) {
-            const effect = document.createElement('div');
-            effect.className = 'match-effect';
-            document.getElementById('game-container').appendChild(effect);
-            
-            const firstSquare = matchingSquares[0].square.getBoundingClientRect();
-            const containerRect = document.getElementById('game-container').getBoundingClientRect();
-            
-            effect.style.left = `${firstSquare.left + firstSquare.width/2 - containerRect.left}px`;
-            effect.style.top = `${firstSquare.top + firstSquare.height/2 - containerRect.top}px`;
-            
-            matchingSquares.forEach(({ square }) => {
-                square.classList.add('fast-disappear');
-                
-                setTimeout(() => {
-                    if (square.parentNode) {
-                        square.parentNode.removeChild(square);
-                    }
-                }, 300);
-            });
-            
-            squaresInBlue = squaresInBlue.filter(square => {
-                return !matchingSquares.some(ms => ms.square === square);
-            });
-            
-            setTimeout(() => {
-                const blueRectangle = document.getElementById('blue-rectangle');
-                const children = Array.from(blueRectangle.children);
-                
-                children.forEach((child, index) => {
-                    child.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                    child.style.transform = `translateX(${index * 5}px)`;
-                });
-                
-                setTimeout(() => {
-                    children.forEach(child => {
-                        child.style.transition = 'transform 0.3s ease';
-                        child.style.transform = 'translateX(0)';
-                    });
-                }, 500);
-                
-                checkGameEnd();
-            }, 350);
-        }
-        
-        function checkGameEnd() {
-            const remainingSquares = squares.filter(square => {
-                return square.style.display !== 'none' && !square.classList.contains('sliding-to-blue');
-            });
-            
-            // إصلاح مشكلة عدم ظهور شاشة الفوز عند إزالة جميع المربعات
-            if (remainingSquares.length === 0 && squaresInBlue.length === 0) {
-                showWinScreen();
-            } else if (squaresInBlue.length >= 7) {
-                const imageCount = {};
-                squaresInBlue.forEach(square => {
-                    const image = square.dataset.image;
-                    imageCount[image] = (imageCount[image] || 0) + 1;
-                });
-                
-                let hasMatch = false;
-                for (const image in imageCount) {
-                    if (imageCount[image] >= 3) {
-                        hasMatch = true;
-                        break;
-                    }
-                }
-                
-                if (!hasMatch) {
-                    showLoseScreen();
-                }
-            }
-        }
-        
-        async function showWinScreen() { // Made async
-            clearInterval(timerInterval);
-            const elapsed = Math.floor((new Date() - startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-            const seconds = (elapsed % 60).toString().padStart(2, '0');
-            document.getElementById('win-time').textContent = `${minutes}:${seconds}`;
-            
-            // Make the win screen visible and start animation first
-            const winScreen = document.getElementById('win-screen');
+        const winScreen = document.getElementById('win-screen');
+        if(winScreen) {
             winScreen.style.display = 'block';
             winScreen.style.opacity = '0';
             winScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
-            
             setTimeout(() => {
                 winScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
                 winScreen.style.opacity = '1';
                 winScreen.style.transform = 'scale(1) translate(-50%, -50%)';
             }, 10);
-
-            // Now call addToLeaderboard, wrapped in try...catch
-            try {
-                await addToLeaderboard(playerName, playerAvatar, elapsed); // Added await
-            } catch (e) {
-                console.error('Error in addToLeaderboard call from showWinScreen:', e);
-                // Potentially alert the user here as well, or rely on addToLeaderboard's alert
-            }
-            
-            // إخفاء عناصر اللعبة
-            document.getElementById('player-info').style.display = 'none';
-            document.getElementById('exit-button').style.display = 'none';
         }
-        
-        function showLoseScreen() {
-            clearInterval(timerInterval);
-            
-            const loseScreen = document.getElementById('lose-screen');
+        try {
+            await addToLeaderboard(playerName, playerAvatar, elapsed); 
+        } catch (e) {
+            console.error('Error in addToLeaderboard call from showWinScreen:', e);
+        }
+        const playerInfoDiv = document.getElementById('player-info');
+        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
+        const exitBtn = document.getElementById('exit-button');
+        if(exitBtn) exitBtn.style.display = 'none';
+    }
+    
+    function showLoseScreen() {
+        clearInterval(timerInterval);
+        const loseScreen = document.getElementById('lose-screen');
+        if(loseScreen){
             loseScreen.style.display = 'block';
             loseScreen.style.opacity = '0';
             loseScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
-            
             setTimeout(() => {
                 loseScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
                 loseScreen.style.opacity = '1';
                 loseScreen.style.transform = 'scale(1) translate(-50%, -50%)';
             }, 10);
-            
-            // إخفاء عناصر اللعبة
-            document.getElementById('player-info').style.display = 'none';
-            document.getElementById('exit-button').style.display = 'none';
         }
-        
-        function backToMainMenu() {
-            clearInterval(timerInterval);
-            gameStarted = false;
-            
-            // إخفاء جميع الشاشات
-            document.querySelectorAll('.result-screen, .profile-screen, .leaderboard-screen').forEach(screen => {
-                screen.style.display = 'none';
-            });
-            
-            // إخفاء عناصر اللعبة
-            document.getElementById('blue-rectangle').style.display = 'none';
-            document.getElementById('squares-container').style.display = 'none';
-            document.getElementById('player-info').style.display = 'none';
-            document.getElementById('exit-button').style.display = 'none';
-            
-            // مسح المربعات
-            squares.forEach(square => {
-                if (square.parentNode) {
-                    square.parentNode.removeChild(square);
-                }
-            });
-            squares = [];
-            squaresInBlue = [];
-
-            // Added: Clear children of blue-rectangle
-            const blueRectangleDOM = document.getElementById('blue-rectangle');
-            if (blueRectangleDOM) {
-                blueRectangleDOM.innerHTML = '';
-            }
-            
-            // إظهار الصفحة الرئيسية
-            document.getElementById('main-menu').style.display = 'flex';
-        }
-        
-        function showProfileScreen() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('profile-screen').style.display = 'flex';
-        }
-        
-        function saveProfile() {
-            const nameInput = document.getElementById('player-name');
-            if (!nameInput.value.trim()) {
-                alert('الرجاء إدخال اسم اللاعب');
-                return;
-            }
-            
-            const oldName = playerName;
-            playerName = nameInput.value.trim();
-            localStorage.setItem('playerName', playerName);
-            localStorage.setItem('playerAvatar', playerAvatar);
-            
-            // تحديث عرض الاسم والصورة
-            document.getElementById('player-name-display').textContent = playerName;
-            if (playerAvatar) {
-                document.getElementById('player-avatar').src = playerAvatar;
-            }
-            
-            // تحديث لوحة الصدارة إذا كان اسم اللاعب قد تغير
-            if (oldName !== playerName) {
-                updateLeaderboardWithNewName(oldName, playerName);
-            }
-            
-            backToMainMenu();
-        }
-        
-        function updateLeaderboardWithNewName(oldName, newName) {
-            // This function's original purpose was to update localStorage.
-            // With Firestore, scores are tied to the playerName at the time of submission.
-            // For simplicity, we won't update historical Firestore records on name change here.
-            // New scores will use the new name.
-            console.log(`Player name changed from ${oldName} to ${newName}. New scores will use the new name.`);
-            // Optionally, refresh the currently displayed leaderboard if it contains the old name
-            // This would be a visual update only for the current session.
-            leaderboard.forEach(player => {
-                // Ensure player.playerName exists before comparing
-                if (player.playerName === oldName) {
-                    player.playerName = newName; // Visually update local leaderboard copy
-                }
-            });
-            updateLeaderboard(); // Re-render the leaderboard UI
-        }
-        
-        async function addToLeaderboard(name, avatar, time) {
-            const currentKsaDate = getCurrentKsaDateString();
-            console.log(`Adding to leaderboard: ${name}, ${time}, Date: ${currentKsaDate}`);
-            try {
-                const scoresCol = fb.collection(db, 'leaderboard_scores');
-                // Check if player already has a score for today
-                const q = fb.query(scoresCol, 
-                                  fb.where('playerName', '==', name), 
-                                  fb.where('ksaDate', '==', currentKsaDate));
-                
-                const querySnapshot = await fb.getDocs(q);
-                let existingDocId = null;
-                let existingScoreTime = Infinity;
-
-                querySnapshot.forEach((doc) => {
-                    existingDocId = doc.id;
-                    existingScoreTime = doc.data().scoreTime;
-                });
-
-                if (existingDocId) { // Player has a score for today
-                    if (time < existingScoreTime) { // New score is better
-                        console.log(`Updating score for ${name}`);
-                        const docRef = fb.doc(db, 'leaderboard_scores', existingDocId);
-                        await fb.updateDoc(docRef, {
-                            scoreTime: time,
-                            playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', // Update avatar too
-                            createdAt: fb.serverTimestamp() 
-                        });
-                        console.log('Score updated successfully.');
-                    } else {
-                        console.log(`New score for ${name} is not better than existing score.`);
-                        // Optionally, just refresh the local leaderboard view if needed
-                        leaderboard = await loadLeaderboardData(); // Refresh from Firestore
-                        updateLeaderboard();
-                        return; // No update needed
-                    }
-                } else { // New player or player's first score for today
-                    console.log(`Adding new score for ${name}`);
-                    await fb.addDoc(scoresCol, {
-                        playerName: name,
-                        playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', // Use default if no avatar
-                        scoreTime: time,
-                        ksaDate: currentKsaDate,
-                        createdAt: fb.serverTimestamp()
-                    });
-                    console.log('New score added successfully.');
-                }
-                
-                // Refresh leaderboard
-                leaderboard = await loadLeaderboardData(); // Refresh from Firestore
-                updateLeaderboard();
-
-            } catch (error) {
-                console.error('Error adding to leaderboard in Firestore:', error);
-                alert('حدث خطأ أثناء حفظ نتيجتك. يرجى المحاولة مرة أخرى.');
-            }
-        }
-        
-        function updateLeaderboard() {
-            const leaderboardList = document.getElementById('leaderboard-list');
-            leaderboardList.innerHTML = '';
-            
-            // عرض أفضل 5 نتائج فقط (Can be adjusted, Firestore query already limits to 10)
-            const topPlayers = leaderboard.slice(0, 10); // Show up to 10, matching Firestore query
-            
-            topPlayers.forEach((player, index) => {
-                const item = document.createElement('div');
-                item.className = 'leaderboard-item';
-                
-                // Ensure player.playerAvatar and player.playerName are used, matching Firestore fields
-                item.innerHTML = `
-                    <div class="leaderboard-rank">${index + 1}</div>
-                    <img class="leaderboard-avatar" src="${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">${player.playerName}</div>
-                        <div class="leaderboard-time">${formatTime(player.scoreTime)}</div>
-                    </div>
-                `;
-                
-                leaderboardList.appendChild(item);
-            });
-        }
-        
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            return `${mins}:${secs}`;
-        }
-        
-        async function showLeaderboard() { // Made async
-            // leaderboard = loadLeaderboardData(); // Old synchronous call
-            try {
-                leaderboard = await loadLeaderboardData(); // Load KSA date-specific data from Firestore
-                updateLeaderboard();
-                document.getElementById('main-menu').style.display = 'none';
-                document.getElementById('leaderboard-screen').style.display = 'flex';
-            } catch (error) {
-                console.error("Failed to show leaderboard due to error in loading data:", error);
-                // Optionally alert the user or handle UI state
-                leaderboard = []; // Ensure leaderboard is empty on error
-                updateLeaderboard(); // Update UI to show empty or error state
-                document.getElementById('main-menu').style.display = 'none';
-                document.getElementById('leaderboard-screen').style.display = 'flex';
-            }
-        }
-        
-        window.addEventListener('load', () => {
-            initGame();
+        const playerInfoDiv = document.getElementById('player-info');
+        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
+        const exitBtn = document.getElementById('exit-button');
+        if(exitBtn) exitBtn.style.display = 'none';
+    }
+    
+    function backToMainMenu() {
+        clearInterval(timerInterval);
+        gameStarted = false;
+        document.querySelectorAll('.result-screen, .profile-screen, .leaderboard-screen').forEach(screen => {
+            screen.style.display = 'none';
         });
+        const blueRect = document.getElementById('blue-rectangle');
+        if(blueRect) blueRect.style.display = 'none';
+        const squaresCont = document.getElementById('squares-container');
+        if(squaresCont) squaresCont.style.display = 'none';
+        const playerInfoDiv = document.getElementById('player-info');
+        if(playerInfoDiv) playerInfoDiv.style.display = 'none';
+        const exitBtn = document.getElementById('exit-button');
+        if(exitBtn) exitBtn.style.display = 'none';
+        
+        squares.forEach(square => {
+            if (square.parentNode) { square.parentNode.removeChild(square); }
+        });
+        squares = [];
+        squaresInBlue = [];
+        const blueRectangleDOM = document.getElementById('blue-rectangle');
+        if (blueRectangleDOM) { blueRectangleDOM.innerHTML = ''; }
+        
+        const mainMenu = document.getElementById('main-menu');
+        if(mainMenu) mainMenu.style.display = 'flex';
+    }
+    
+    function showProfileScreen() {
+        const mainMenu = document.getElementById('main-menu');
+        if(mainMenu) mainMenu.style.display = 'none';
+        const profileScreen = document.getElementById('profile-screen');
+        if(profileScreen) profileScreen.style.display = 'flex';
+    }
+    
+    function saveProfile() {
+        const nameInput = document.getElementById('player-name');
+        if (!nameInput || !nameInput.value.trim()) { 
+            alert('الرجاء إدخال اسم اللاعب');
+            return;
+        }
+        const oldName = playerName;
+        playerName = nameInput.value.trim();
+        localStorage.setItem('playerName', playerName);
+        localStorage.setItem('playerAvatar', playerAvatar);
+        
+        const playerNameDisplay = document.getElementById('player-name-display');
+        if(playerNameDisplay) playerNameDisplay.textContent = playerName;
+        const playerAvatarImg = document.getElementById('player-avatar');
+        if (playerAvatar && playerAvatarImg) {
+            playerAvatarImg.src = playerAvatar;
+        }
+        if (oldName !== playerName) {
+            updateLeaderboardWithNewName(oldName, playerName);
+        }
+        backToMainMenu();
+    }
+    
+    function updateLeaderboardWithNewName(oldName, newName) {
+        console.log(`Player name changed from ${oldName} to ${newName}. New scores will use the new name.`);
+        leaderboard.forEach(player => {
+            if (player.playerName === oldName) {
+                player.playerName = newName; 
+            }
+        });
+        updateLeaderboard(); 
+    }
+    
+    async function addToLeaderboard(name, avatar, time) {
+        const currentKsaDate = getCurrentKsaDateString();
+        console.log(`Adding to leaderboard: ${name}, ${time}, Date: ${currentKsaDate}`);
+        try {
+            const scoresCol = fb.collection(db, 'leaderboard_scores');
+            const q = fb.query(scoresCol, 
+                              fb.where('playerName', '==', name), 
+                              fb.where('ksaDate', '==', currentKsaDate));
+            const querySnapshot = await fb.getDocs(q);
+            let existingDocId = null;
+            let existingScoreTime = Infinity;
+            querySnapshot.forEach((doc) => {
+                existingDocId = doc.id;
+                existingScoreTime = doc.data().scoreTime;
+            });
+            if (existingDocId) { 
+                if (time < existingScoreTime) { 
+                    console.log(`Updating score for ${name}`);
+                    const docRef = fb.doc(db, 'leaderboard_scores', existingDocId);
+                    await fb.updateDoc(docRef, {
+                        scoreTime: time,
+                        playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', 
+                        createdAt: fb.serverTimestamp() 
+                    });
+                    console.log('Score updated successfully.');
+                } else {
+                    console.log(`New score for ${name} is not better than existing score.`);
+                    leaderboard = await loadLeaderboardData(); 
+                    updateLeaderboard();
+                    return; 
+                }
+            } else { 
+                console.log(`Adding new score for ${name}`);
+                await fb.addDoc(scoresCol, {
+                    playerName: name,
+                    playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', 
+                    scoreTime: time,
+                    ksaDate: currentKsaDate,
+                    createdAt: fb.serverTimestamp()
+                });
+                console.log('New score added successfully.');
+            }
+            leaderboard = await loadLeaderboardData(); 
+            updateLeaderboard();
+        } catch (error) {
+            console.error('Error adding to leaderboard in Firestore:', error);
+            alert('حدث خطأ أثناء حفظ نتيجتك. يرجى المحاولة مرة أخرى.');
+        }
+    }
+    
+    function updateLeaderboard() {
+        const leaderboardList = document.getElementById('leaderboard-list');
+        if(!leaderboardList) { console.error("leaderboard-list not found!"); return; }
+        leaderboardList.innerHTML = '';
+        const topPlayers = leaderboard.slice(0, 10); 
+        topPlayers.forEach((player, index) => {
+            const item = document.createElement('div');
+            item.className = 'leaderboard-item';
+            item.innerHTML = \`
+                <div class="leaderboard-rank">\${index + 1}</div>
+                <img class="leaderboard-avatar" src="\${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
+                <div class="leaderboard-info">
+                    <div class="leaderboard-name">\${player.playerName}</div>
+                    <div class="leaderboard-time">\${formatTime(player.scoreTime)}</div>
+                </div>
+            \`;
+            leaderboardList.appendChild(item);
+        });
+    }
+    
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return `${mins}:${secs}`;
+    }
+    
+    async function showLeaderboard() { 
+        try {
+            leaderboard = await loadLeaderboardData(); 
+            updateLeaderboard();
+            const mainMenu = document.getElementById('main-menu');
+            if(mainMenu) mainMenu.style.display = 'none';
+            const leaderboardScreen = document.getElementById('leaderboard-screen');
+            if(leaderboardScreen) leaderboardScreen.style.display = 'flex';
+        } catch (error) {
+            console.error("Failed to show leaderboard due to error in loading data:", error);
+            leaderboard = []; 
+            updateLeaderboard(); 
+            const mainMenu = document.getElementById('main-menu');
+            if(mainMenu) mainMenu.style.display = 'none';
+            const leaderboardScreen = document.getElementById('leaderboard-screen');
+            if(leaderboardScreen) leaderboardScreen.style.display = 'flex';
+        }
+    }
+    
+    window.addEventListener('load', () => {
+        initGame();
+    });
     </script>
 </body>
 </html>

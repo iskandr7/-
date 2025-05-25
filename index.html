@@ -189,14 +189,46 @@
     let leaderboard = [];
 
     async function loadLeaderboardData() {
-        const currentKsaDate = getCurrentKsaDateString(); console.log(`Loading leaderboard for date: ${currentKsaDate}`);
+        const currentKsaDate = getCurrentKsaDateString(); 
+        console.log(`[loadLeaderboardData] Attempting to load for KSA Date: ${currentKsaDate}`); 
         try {
             const scoresCol = fb.collection(db, 'leaderboard_scores');
-            const q = fb.query(scoresCol, fb.where('ksaDate', '==', currentKsaDate), fb.orderBy('scoreTime', 'asc'), fb.limit(10));
-            const querySnapshot = await fb.getDocs(q); const dailyScores = [];
-            querySnapshot.forEach((doc) => { dailyScores.push({ id: doc.id, playerName: doc.data().playerName, playerAvatar: doc.data().playerAvatar, scoreTime: doc.data().scoreTime, ksaDate: doc.data().ksaDate }); });
-            console.log('Fetched scores:', dailyScores); leaderboard = dailyScores; return dailyScores;
-        } catch (error) { console.error('Error loading leaderboard from Firestore:', error); alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.'); leaderboard = []; return []; }
+            const q = fb.query(scoresCol, 
+                              fb.where('ksaDate', '==', currentKsaDate), 
+                              fb.orderBy('scoreTime', 'asc'), 
+                              fb.limit(10));
+            
+            console.log("[loadLeaderboardData] Query constructed. Fetching documents...");
+            const querySnapshot = await fb.getDocs(q);
+            console.log(`[loadLeaderboardData] Query snapshot received. Size: ${querySnapshot.size}`);
+            
+            const dailyScores = [];
+            if (querySnapshot.empty) {
+                console.log("[loadLeaderboardData] No documents found for this date.");
+            } else {
+                querySnapshot.forEach((doc) => { 
+                    console.log(`[loadLeaderboardData] Processing doc ID: ${doc.id}, Data:`, JSON.stringify(doc.data())); 
+                    const data = doc.data();
+                    dailyScores.push({ 
+                        id: doc.id, 
+                        playerName: data.playerName, 
+                        playerAvatar: data.playerAvatar, 
+                        scoreTime: data.scoreTime,
+                        ksaDate: data.ksaDate 
+                    });
+                });
+            }
+            
+            console.log('[loadLeaderboardData] Assembled dailyScores:', JSON.stringify(dailyScores)); 
+            leaderboard = dailyScores; 
+            return dailyScores;
+        } catch (error) { 
+            console.error('[loadLeaderboardData] Error loading leaderboard from Firestore:', error.message); 
+            console.error('[loadLeaderboardData] Full error object:', error); 
+            alert('حدث خطأ أثناء تحميل لوحة الصدارة. يرجى المحاولة مرة أخرى.');
+            leaderboard = [];
+            return []; 
+        }
     }
     async function initGame() {
         preloadImages();

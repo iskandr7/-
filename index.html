@@ -187,6 +187,7 @@
     let squares = []; let squaresInBlue = []; let gameStarted = false; let startTime; let timerInterval;
     let playerName = localStorage.getItem('playerName') || ''; let playerAvatar = localStorage.getItem('playerAvatar') || '';
     let leaderboard = [];
+    let isWinProcessed = false;
 
     async function loadLeaderboardData() {
         const currentKsaDate = getCurrentKsaDateString(); 
@@ -253,6 +254,7 @@
         try { await loadLeaderboardData(); } catch (err) { console.error("Failed to load leaderboard during initGame:", err); }
     }
     function startGame() {
+        isWinProcessed = false; // ADD THIS LINE
         clearInterval(timerInterval); gameStarted = true;
         const winScreen = document.getElementById('win-screen'); if (winScreen) winScreen.style.display = 'none'; const loseScreen = document.getElementById('lose-screen'); if (loseScreen) loseScreen.style.display = 'none';
         const blueRect = document.getElementById('blue-rectangle'); if (blueRect) blueRect.style.display = 'flex'; const squaresCont = document.getElementById('squares-container'); if (squaresCont) squaresCont.style.display = 'block'; const playerInfoDiv = document.getElementById('player-info'); if (playerInfoDiv) playerInfoDiv.style.display = 'flex'; const exitBtn = document.getElementById('exit-button'); if (exitBtn) exitBtn.style.display = 'block';
@@ -325,8 +327,37 @@
     }
     function checkGameEnd() {
         const remainingSquares = squares.filter(square => square.style.display !== 'none' && !square.classList.contains('sliding-to-blue'));
-        if (remainingSquares.length === 0 && squaresInBlue.length === 0) { showWinScreen(); }
-        else if (squaresInBlue.length >= 7) { const imageCount = {}; squaresInBlue.forEach(square => { const image = square.dataset.image; imageCount[image] = (imageCount[image] || 0) + 1; }); let hasMatch = false; for (const image in imageCount) { if (imageCount[image] >= 3) { hasMatch = true; break; } } if (!hasMatch) { showLoseScreen(); } }
+        
+        if (remainingSquares.length === 0 && squaresInBlue.length === 0) { // This is the win condition part
+            if (!isWinProcessed) {
+                isWinProcessed = true; 
+                console.log("[checkGameEnd] Win condition met. Processing win. isWinProcessed set to true.");
+                showWinScreen(); 
+            } else {
+                console.log("[checkGameEnd] Win condition met, but win already processed (isWinProcessed is true). Ignoring subsequent trigger.");
+            }
+        } else if (squaresInBlue.length >= 7) { // This is the lose condition part
+            const imageCount = {};
+            squaresInBlue.forEach(square => {
+                const image = square.dataset.image;
+                imageCount[image] = (imageCount[image] || 0) + 1;
+            });
+            
+            let hasMatch = false;
+            for (const image in imageCount) {
+                if (imageCount[image] >= 3) {
+                    hasMatch = true;
+                    break;
+                }
+            }
+            
+            if (!hasMatch) {
+                if (!isWinProcessed) { // Check flag before showing lose screen too
+                     console.log("[checkGameEnd] Lose condition: 7 squares in blue, no match. isWinProcessed:", isWinProcessed);
+                    showLoseScreen();
+                }
+            }
+        }
     }
     async function showWinScreen() {
         clearInterval(timerInterval); const elapsed = Math.floor((new Date() - startTime) / 1000); const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0'); const seconds = (elapsed % 60).toString().padStart(2, '0'); const winTime = document.getElementById('win-time'); if (winTime) winTime.textContent = `${minutes}:${seconds}`;
@@ -351,36 +382,124 @@
         const playerNameDisplay = document.getElementById('player-name-display'); if (playerNameDisplay) playerNameDisplay.textContent = playerName; const playerAvatarImg = document.getElementById('player-avatar'); if (playerAvatar && playerAvatarImg) { playerAvatarImg.src = playerAvatar; }
         if (oldName !== playerName) { updateLeaderboardWithNewName(oldName, playerName); } backToMainMenu();
     }
-    function updateLeaderboardWithNewName(oldName, newName) {
-        console.log(`Player name changed from ${oldName} to ${newName}. New scores will use the new name.`);
-        leaderboard.forEach(player => { if (player.playerName === oldName) { player.playerName = newName; } }); updateLeaderboard();
-    }
     async function addToLeaderboard(name, avatar, timeInSeconds) {
-        const currentKsaDate = getCurrentKsaDateString(); console.log(`Adding to leaderboard: Player: ${name}, Avatar: ${avatar}, Time: ${timeInSeconds}, Date: ${currentKsaDate}`);
-        if (!name || name.trim() === "") { console.error("Player name is empty. Cannot save score."); alert("اسم اللاعب فارغ. لا يمكن حفظ النتيجة."); return; }
+        const currentKsaDate = getCurrentKsaDateString();
+        console.log(`[addToLeaderboard] Called. Player: ${name}, Avatar: ${avatar}, Time: ${timeInSeconds}, Date: ${currentKsaDate}`);
+
+        if (!name || name.trim() === "") {
+            console.error("[addToLeaderboard] Player name is empty. Cannot save score.");
+            alert("اسم اللاعب فارغ. لا يمكن حفظ النتيجة.");
+            return;
+        }
+
         try {
-            const scoresCol = fb.collection(db, 'leaderboard_scores'); const q = fb.query(scoresCol, fb.where('playerName', '==', name), fb.where('ksaDate', '==', currentKsaDate));
-            const querySnapshot = await fb.getDocs(q); let existingDocId = null; let existingScoreTime = Infinity;
-            querySnapshot.forEach((doc) => { existingDocId = doc.id; existingScoreTime = doc.data().scoreTime; });
-            if (existingDocId) { if (timeInSeconds < existingScoreTime) { console.log(`Updating score for ${name}`); const docRef = fb.doc(db, 'leaderboard_scores', existingDocId); await fb.updateDoc(docRef, { scoreTime: timeInSeconds, playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', createdAt: fb.serverTimestamp() }); console.log('Score updated successfully.'); } else { console.log(`New score for ${name} is not better. No update.`); await loadLeaderboardData(); updateLeaderboard(); return; } }
-            else { console.log(`Adding new score for ${name}`); await fb.addDoc(scoresCol, { playerName: name, playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png', scoreTime: timeInSeconds, ksaDate: currentKsaDate, createdAt: fb.serverTimestamp() }); console.log('New score added successfully.'); }
-            await loadLeaderboardData(); updateLeaderboard();
-        } catch (error) { console.error('Error adding to leaderboard in Firestore:', error); alert('حدث خطأ أثناء حفظ نتيجتك. يرجى المحاولة مرة أخرى.'); }
+            const scoresCol = fb.collection(db, 'leaderboard_scores');
+            const q = fb.query(scoresCol, 
+                              fb.where('playerName', '==', name), 
+                              fb.where('ksaDate', '==', currentKsaDate));
+            
+            console.log(`[addToLeaderboard] Querying for existing score(s) for player "${name}" on KSA Date "${currentKsaDate}"...`);
+            const querySnapshot = await fb.getDocs(q);
+            console.log(`[addToLeaderboard] Found ${querySnapshot.size} existing score document(s).`);
+
+            let bestExistingDocId = null;
+            let bestExistingScoreTime = Infinity;
+            const docsToDelete = [];
+            const existingDocs = []; 
+
+            querySnapshot.forEach((doc) => {
+                const scoreData = doc.data();
+                console.log(`[addToLeaderboard] Evaluating existing doc ID: ${doc.id}, Score: ${scoreData.scoreTime}, Data: ${JSON.stringify(scoreData)}`);
+                existingDocs.push({id: doc.id, ...scoreData});
+            });
+
+            // Sort by scoreTime to easily find the best if multiple exist
+            existingDocs.sort((a, b) => a.scoreTime - b.scoreTime);
+
+            if (existingDocs.length > 0) {
+                bestExistingDocId = existingDocs[0].id; // This is the doc with the best score
+                bestExistingScoreTime = existingDocs[0].scoreTime;
+                console.log(`[addToLeaderboard] Best existing score is ${bestExistingScoreTime} in doc ID: ${bestExistingDocId}`);
+                // Mark all other than the absolute best for deletion
+                for (let i = 1; i < existingDocs.length; i++) {
+                    docsToDelete.push(existingDocs[i].id);
+                }
+            }
+            
+            // Delete redundant scores (if any were found besides the best one)
+            for (const docIdToDelete of docsToDelete) {
+                console.log(`[addToLeaderboard] Deleting redundant/worse score document with ID: ${docIdToDelete}`);
+                try {
+                    await fb.deleteDoc(fb.doc(db, 'leaderboard_scores', docIdToDelete));
+                    console.log(`[addToLeaderboard] Successfully deleted doc ID: ${docIdToDelete}`);
+                } catch (deleteError) {
+                    console.error(`[addToLeaderboard] Error deleting doc ID ${docIdToDelete}:`, deleteError);
+                }
+            }
+
+            // Now, decide whether to update the best existing score or add a new one
+            if (bestExistingDocId) { // A single best score for today exists (or was determined after cleanup)
+                if (timeInSeconds < bestExistingScoreTime) {
+                    console.log(`[addToLeaderboard] New score ${timeInSeconds} is better than existing best ${bestExistingScoreTime}. Updating doc ID: ${bestExistingDocId}`);
+                    const docRef = fb.doc(db, 'leaderboard_scores', bestExistingDocId);
+                    await fb.updateDoc(docRef, {
+                        scoreTime: timeInSeconds,
+                        playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png',
+                        createdAt: fb.serverTimestamp() // Update timestamp for the new best score
+                    });
+                    console.log('[addToLeaderboard] Score updated successfully.');
+                } else {
+                    console.log(`[addToLeaderboard] New score ${timeInSeconds} is NOT better than existing best ${bestExistingScoreTime} (doc ID: ${bestExistingDocId}). No Firestore update to this document.`);
+                }
+            } else { // No score existed for today for this player (after potential cleanup)
+                console.log(`[addToLeaderboard] No existing score found for player "${name}" on KSA Date "${currentKsaDate}" (after cleanup, if any). Adding new score.`);
+                await fb.addDoc(scoresCol, {
+                    playerName: name,
+                    playerAvatar: avatar || 'https://i.imgur.com/8Km9tLL.png',
+                    scoreTime: timeInSeconds,
+                    ksaDate: currentKsaDate,
+                    createdAt: fb.serverTimestamp()
+                });
+                console.log('[addToLeaderboard] New score added successfully.');
+            }
+            
+            console.log("[addToLeaderboard] Reloading all leaderboard data to refresh UI.");
+            await loadLeaderboardData(); 
+            updateLeaderboard();         
+
+        } catch (error) {
+            console.error('[addToLeaderboard] General error:', error.message);
+            console.error('[addToLeaderboard] Full error object:', error);
+            alert('حدث خطأ فني أثناء حفظ أو تحديث نتيجتك.');
+        }
     }
     function updateLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboard-list'); if (!leaderboardList) { console.error("leaderboard-list not found!"); return; }
-        leaderboardList.innerHTML = ''; const topPlayers = leaderboard.slice(0, 10);
-        topPlayers.forEach((player, index) => {
-            const item = document.createElement('div'); item.className = 'leaderboard-item';
-            item.innerHTML = `
-                <div class="leaderboard-rank">${index + 1}</div>
-                <img class="leaderboard-avatar" src="${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
-                <div class="leaderboard-info">
-                    <div class="leaderboard-name">${player.playerName}</div>
-                    <div class="leaderboard-time">${formatTime(player.scoreTime)}</div>
-                </div>
-            `; leaderboardList.appendChild(item);
-        });
+       const leaderboardList = document.getElementById('leaderboard-list'); 
+       if(!leaderboardList) { 
+           console.error("[updateLeaderboard] leaderboard-list element not found!"); 
+           return; 
+       }
+       console.log("[updateLeaderboard] Called. Current global leaderboard state before clearing:", JSON.stringify(leaderboard));
+       leaderboardList.innerHTML = ''; 
+       console.log("[updateLeaderboard] leaderboardList cleared. Re-populating. Number of players to display:", leaderboard.length);
+       
+       const topPlayers = leaderboard.slice(0, 10); 
+       
+       topPlayers.forEach((player, index) => {
+           const item = document.createElement('div');
+           item.className = 'leaderboard-item';
+           console.log(`[updateLeaderboard] Displaying player: ${player.playerName}, Score: ${player.scoreTime}`);
+           item.innerHTML = `
+               <div class="leaderboard-rank">${index + 1}</div>
+               <img class="leaderboard-avatar" src="${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
+               <div class="leaderboard-info">
+                   <div class="leaderboard-name">${player.playerName}</div> 
+                   <div class="leaderboard-time">${formatTime(player.scoreTime)}</div>
+               </div>
+           `;
+           leaderboardList.appendChild(item);
+       });
+       console.log("[updateLeaderboard] Finished populating leaderboardList.");
     }
     function formatTime(seconds) { const mins = Math.floor(seconds / 60).toString().padStart(2, '0'); const secs = (seconds % 60).toString().padStart(2, '0'); return `${mins}:${secs}`; }
     async function showLeaderboard() {

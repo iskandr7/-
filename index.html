@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main-menu">
+        <h1>Game Title</h1>
+        <button id="start-game">Start Game</button>
+        <button id="leaderboard">Leaderboard</button>
+        <button id="profile">Profile</button>
+        <button id="sign-in">Sign In with Google</button>
+        <button id="sign-out">Sign Out</button>
+    </div>
+
+    <div id="game-screen" style="display:none;">
+        <!-- Game content goes here -->
+        <button id="back-to-main">Back to Main Menu</button>
+    </div>
+
+    <div id="leaderboard-screen" style="display:none;">
+        <!-- Leaderboard content goes here -->
+        <button id="back-to-main-leaderboard">Back to Main Menu</button>
+    </div>
+
+    <div id="profile-screen" style="display:none;">
+        <!-- Profile content goes here -->
+        <input type="text" id="username" placeholder="Username">
+        <button id="save-profile">Save Profile</button>
+        <button id="back-to-main-profile">Back to Main Menu</button>
+    </div>
+
+    <script type="module">
+    // Firebase SDK imports
+    // ... (lots of existing code) ...
+
+    // ========= INSERT NEW FUNCTION DEFINITIONS HERE =========
+    function startGame() {
+        console.log('startGame called');
+    }
+
+    function signInWithGoogle() {
+        console.log('signInWithGoogle called');
+    }
+
+    function signOutUser() {
+        console.log('signOutUser called');
+    }
+
+    function backToMainMenu() {
+        console.log('backToMainMenu called');
+    }
+
+    function saveProfile() {
+        console.log('saveProfile called');
+    }
+
+    function showLeaderboard() {
+        console.log('showLeaderboard called');
+    }
+
+    function showProfileScreen() {
+        console.log('showProfileScreen called');
+    }
+
+    window.addEventListener('load', () => { initGame(); });
+    
+    window.startGame = startGame;
+    window.backToMainMenu = backToMainMenu;
+    // window.saveProfile = saveProfile; 
+    window.showLeaderboard = showLeaderboard; 
+    // window.initGame = initGame; // initGame is not defined yet
+    window.showProfileScreen = showProfileScreen; 
+    window.signInWithGoogle = signInWithGoogle;
+    window.signOutUser = signOutUser; 
+
+    function initGame() {
+        // Placeholder for game initialization logic
+        console.log('initGame called');
+        document.getElementById('start-game').addEventListener('click', startGame);
+        document.getElementById('leaderboard').addEventListener('click', showLeaderboard);
+        document.getElementById('profile').addEventListener('click', showProfileScreen);
+        document.getElementById('sign-in').addEventListener('click', signInWithGoogle);
+        document.getElementById('sign-out').addEventListener('click', signOutUser);
+        document.getElementById('back-to-main').addEventListener('click', backToMainMenu);
+        // Event listener for save profile button
+        // document.getElementById('save-profile').addEventListener('click', saveProfile);
+        // Event listeners for back buttons on leaderboard and profile screens
+        document.getElementById('back-to-main-leaderboard').addEventListener('click', backToMainMenu);
+        document.getElementById('back-to-main-profile').addEventListener('click', backToMainMenu);
+    }
+    </script>
+</body>
+</html>

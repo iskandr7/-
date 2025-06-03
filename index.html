@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جمل مجنون - نسخة محسنة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* تعريف المتغيرات الأساسية للألوان والظلال */
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #ff9a3c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f8f1e5;
+            --card-color: #fff9f0;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* تنسيق الجسم العام للصفحة */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+            overflow: hidden;
+            direction: rtl;
+            user-select: none;
+            background-color: var(--bg-color);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* حاوية اللعبة الرئيسية */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            max-width: 500px;
+            height: 100vh;
+            max-height: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%);
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        /* المستطيل الأزرق في الأسفل */
+        #blue-rectangle {
+            position: absolute;
+            bottom: calc(15% - 60px); /* تم تنزيله للأسفل بمقدار 15 بكسل إضافية (45+15=60) */
+            left: 5%;
+            right: 5%;
+            height: 60px; /* تم تقليل الارتفاع إلى 60 بكسل */
+            background: linear-gradient(145deg, #3a5f94 0%, #5a7fb5 100%);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            padding: 0 10px;
+            will-change: transform;
+            z-index: 100;
+            min-height: 60px; /* لضمان الحد الأدنى للارتفاع */
+        }
+
+        /* حاوية المربعات العلوية */
+        #squares-container {
+            position: absolute;
+            width: 94%;
+            max-width: 420px;
+            height: 58%;
+            /* تم تعديل الموضع لضمان عدم التداخل مع المستطيل الأزرق */
+            bottom: auto; /* يعتمد على موقع المستطيل الأزرق الجديد */
+            top: 22%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.16);
+            border-radius: 18px;
+            backdrop-filter: blur(6px);
+            border: 2px dashed rgba(0, 0, 0, 0.12);
+            will-change: contents;
+            display: none;
+            touch-action: manipulation;
+            min-height: 220px;
+        }
+
+        /* تنسيق المربع الفردي */
+        .square {
+            position: absolute;
+            width: 50px; /* تم تكبير مربعات الصور إلى 60 بكسل */
+            height: 50px; /* تم تكبير مربعات الصور إلى 60 بكسل */
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.18);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            background-size: 80%;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: var(--card-color);
+            transform-origin: center;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            perspective: 1000px;
+            touch-action: manipulation;
+        }
+
+        /* تأثير التوهج على المربع */
+        .square::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%);
+            border-radius: 9px;
+            pointer-events: none;
+        }
+
+        /* تغطية المربعات التي لا يمكن النقر عليها */
+        .square.covered::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.29);
+            border-radius: 9px;
+            pointer-events: none;
+        }
+
+        /* حركة الاهتزاز للمربعات غير القابلة للنقر */
+        @keyframes shake {
+            0% {
+                transform: translateX(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateX(-5px) rotate(-2deg);
+            }
+
+            50% {
+                transform: translateX(5px) rotate(2deg);
+            }
+
+            75% {
+                transform: translateX(-5px) rotate(-2deg);
+            }
+
+            100% {
+                transform: translateX(0) rotate(0deg);
+            }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* تأثير الانزلاق للمربع عند النقر عليه */
+        @keyframes slide-to-blue {
+            0% {
+                transform: translate(var(--start-x), var(--start-y)) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(calc(var(--start-x) + var(--end-x) / 2), calc(var(--start-y) + var(--end-y) / 2)) scale(0.7); /* تصغير أقل ليكون أوضح */
+                opacity: 0.7; /* شفافية أقل ليكون أوضح */
+            }
+            100% {
+                transform: translate(var(--end-x), var(--end-y)) scale(0.1);
+                opacity: 0;
+            }
+        }
+
+        .sliding-to-blue {
+            animation: slide-to-blue 0.5s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* تنسيق المربعات داخل المستطيل الأزرق */
+        .square-in-blue {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            margin: 0 5px;
+            transition: all 0.14s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.18);
+            background-size: 80%;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: var(--card-color);
+            transform-origin: center;
+            will-change: transform;
+        }
+
+        .square-in-blue::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 50%);
+            border-radius: 9px;
+            pointer-events: none;
+        }
+
+        /* تنسيق الأزرار الرئيسية */
+        #start-button,
+        #profile-button,
+        #leaderboard-button {
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        #start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 17px 40px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(145deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.21);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.26);
+            letter-spacing: 1px;
+            will-change: transform;
+        }
+
+        #start-button:hover {
+            transform: translate(-50%, -50%) scale(1.08);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #ff8a2c 0%, #ff5b5b 100%);
+        }
+
+        #profile-button,
+        #leaderboard-button {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 19px;
+            font-weight: 700;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px 11px rgba(0, 0, 0, 0.16);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.17);
+            letter-spacing: 1px;
+            will-change: transform;
+        }
+
+        #profile-button {
+            top: 66%;
+            padding: 13px 27px;
+            background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%);
+        }
+
+        #profile-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.23);
+            background: linear-gradient(145deg, #3a5f94 0%, #4a6fa5 100%);
+        }
+
+        #leaderboard-button {
+            top: 80%;
+            padding: 13px 27px;
+            background: linear-gradient(145deg, #4CAF50 0%, #2E7D32 100%);
+        }
+
+        #leaderboard-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.23);
+            background: linear-gradient(145deg, #3a8c3f 0%, #1B5E20 100%);
+        }
+
+        /* شاشات النتائج (الفوز/الخسارة) */
+        .result-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 245, 245, 0.98) 100%);
+            padding: 8%;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.24);
+            z-index: 100;
+            display: none;
+            width: 85%;
+            max-width: 350px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            will-change: transform;
+        }
+
+        #win-screen h2,
+        #lose-screen h2 {
+            font-size: 36px;
+            margin-bottom: 13px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.13);
+        }
+
+        #win-screen h2 {
+            color: #4CAF50;
+        }
+
+        #lose-screen h2 {
+            color: #F44336;
+        }
+
+        .result-screen p {
+            font-size: 19px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        /* تنسيق الأزرار العامة */
+        button {
+            background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%);
+            color: white;
+            border: none;
+            padding: 13px 26px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 17px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.13);
+            transition: all 0.3s ease;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+            will-change: transform;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #3a5f94 0%, #4a6fa5 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #play-again-button {
+            background: linear-gradient(145deg, #4CAF50 0%, #2E7D32 100%);
+            margin-bottom: 10px;
+        }
+
+        #play-again-button:hover {
+            background: linear-gradient(145deg, #3a8c3f 0%, #1B5E20 100%);
+        }
+
+        /* شاشة الملف الشخصي */
+        .profile-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .profile-form {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(90deg, #4a6fa5 0%, #ff9a3c 50%, #ff6b6b 100%);
+        }
+
+        .profile-form h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 19px;
+            font-size: 23px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .profile-form h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            right: 25%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%);
+        }
+
+        .form-group {
+            margin-bottom: 17px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+        }
+
+        #avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            border: 4px solid var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        #avatar-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #avatar-preview span {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        #avatar-upload {
+            display: none;
+        }
+
+        .profile-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .profile-buttons button {
+            flex: 1;
+            margin: 0;
+            padding: 12px;
+        }
+
+        .profile-buttons button:first-child {
+            background: linear-gradient(145deg, var(--primary-color) 0%, #5a7fb5 100%);
+        }
+
+        .profile-buttons button:last-child {
+            background: linear-gradient(145deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        /* شاشة لوحة الصدارة */
+        .leaderboard-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-header h2 {
+            color: var(--primary-color);
+            font-size: 22px;
+        }
+
+        .leaderboard-item {
+            background: white;
+            border-radius: 13px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.09);
+            transition: all 0.3s;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.17);
+        }
+
+        .leaderboard-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            margin-left: 11px;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .leaderboard-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .leaderboard-rank {
+            background: var(--primary-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-left: 10px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.09);
+        }
+
+        .back-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            align-self: center;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.19);
+        }
+
+        /* القائمة الرئيسية */
+        .main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f5e8d0 0%, #e8d9b5 100%);
+            z-index: 1000;
+        }
+
+        .game-title {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.13);
+            position: absolute;
+            top: 16%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* معلومات اللاعب (الاسم، الصورة، التقدم) */
+        #player-info {
+            position: absolute;
+            top: calc(10% - 80px); /* تم رفعها بمقدار 15 بكسل إضافية (65+15=80) */
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #player-name-display {
+            font-size: 18px; /* حجم أكبر لاسم المستخدم */
+            font-weight: 700;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.08);
+            margin-bottom: 5px; /* مسافة بين الاسم والصورة */
+        }
+
+        #player-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 3px solid var(--primary-color);
+            object-fit: cover;
+            margin-bottom: 3px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        #game-progress {
+            font-size: 16px;
+            font-weight: bold; /* خط عريض */
+            color: var(--primary-color);
+            margin-top: 5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* زر الخروج */
+        #exit-button {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            background: none;
+            color: #333;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+            z-index: 100;
+            display: none;
+            width: 37px;
+            height: 37px;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        #exit-button:hover {
+            background: rgba(0, 0, 0, 0.07);
+            transform: translateY(-2px);
+        }
+
+        /* استجابة التصميم لأحجام الشاشات المختلفة */
+        @media (min-width: 768px) {
+            .square,
+            .square-in-blue {
+                width: 55px;
+                height: 55px;
+            }
+
+            #start-button {
+                font-size: 28px;
+                padding: 22px 50px;
+            }
+
+            #profile-button,
+            #leaderboard-button {
+                font-size: 22px;
+                padding: 18px 36px;
+            }
+
+            #win-screen h2,
+            #lose-screen h2 {
+                font-size: 36px;
+            }
+
+            button {
+                font-size: 22px;
+                padding: 18px 36px;
+            }
+
+            #squares-container {
+                max-width: 400px;
+                max-height: 550px;
+            }
+
+            #blue-rectangle {
+                min-height: 55px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <div class="main-menu" id="main-menu">
+            <h1 class="game-title">جمل مجنون</h1>
+            <button id="start-button">ابدأ اللعب</button>
+            <button id="profile-button">الملف الشخصي</button>
+            <button id="leaderboard-button">لوحة الصدارة</button>
+        </div>
+
+        <button id="exit-button">←</button>
+
+        <div id="player-info">
+            <div id="player-name-display">اللاعب</div>
+            <img id="player-avatar" src="https://i.imgur.com/8Km9tLL.png" alt="صورة اللاعب">
+            <div id="game-progress"><span id="progress-percentage">0</span>%</div>
+        </div>
+
+        <div id="blue-rectangle"></div>
+        <div id="squares-container"></div>
+
+        <div id="win-screen" class="result-screen">
+            <h2>🎉 مبروك لقد فزت!</h2>
+            <p class="time-label">الوقت المستغرق:</p>
+            <p class="time-value"><span id="win-time">00:00</span></p>
+            <button id="play-again-button" onclick="startGame()">العب مجدداً</button>
+            <button onclick="backToMainMenu()">العودة للصفحة الرئيسية</button>
+        </div>
+
+        <div id="lose-screen" class="result-screen">
+            <h2>😢 لقد خسرت!</h2>
+            <p>حاول مرة أخرى!</p>
+            <button onclick="backToMainMenu()">العودة للصفحة الرئيسية</button>
+        </div>
+
+        <div id="profile-screen" class="profile-screen">
+            <div class="profile-form">
+                <h2>الملف الشخصي</h2>
+                <div id="avatar-preview" onclick="document.getElementById('avatar-upload').click()">
+                    <span>اضغط لاختيار صورة</span>
+                </div>
+                <input type="file" id="avatar-upload" accept="image/*">
+                <div class="form-group">
+                    <label for="player-name">اسم اللاعب</label>
+                    <input type="text" id="player-name" placeholder="أدخل اسمك">
+                </div>
+                <div class="profile-buttons">
+                    <button onclick="saveProfile()">حفظ</button>
+                    <button onclick="backToMainMenu()">إلغاء</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="leaderboard-screen" class="leaderboard-screen">
+            <div class="leaderboard-header">
+                <h2>أفضل الأوقات</h2>
+                <button class="back-button" onclick="backToMainMenu()">رجوع</button>
+            </div>
+            <div id="leaderboard-list"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // استيراد وحدات Firebase الضرورية
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, where, doc, updateDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // إعدادات Firebase (يجب أن تكون هذه الإعدادات خاصة بمشروعك)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDC6Ux27mPtu4Fn1rGgqyuC0uD3PrmGPs",
+            authDomain: "skloz-9392f.firebaseapp.com",
+            projectId: "skloz-9392f",
+            storageBucket: "skloz-9392f.firebasestorage.app",
+            messagingSenderId: "457319200318",
+            appId: "1:457319200318:web:97321b2df3532796b6836f",
+            measurementId: "G-LBEE8GNWZM"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db; // جعل db متاحًا عالميًا
+        window.fb = { collection, getDocs, addDoc, query, orderBy, limit, where, doc, updateDoc, serverTimestamp, deleteDoc }; // جعل وظائف Firebase متاحة عالميًا
+
+        // قائمة الصور المستخدمة في اللعبة
+        const images = [
+            { name: 'جوهرة', url: 'https://i.imgur.com/AjPTyZC.png' },
+            { name: 'نعناع', url: 'https://i.imgur.com/O3nvXac.png' },
+            { name: 'حليب', url: 'https://i.imgur.com/ifJb1W5.png' },
+            { name: 'جزر', url: 'https://i.imgur.com/prC9PT2.png' },
+            { name: 'قفاز', url: 'https://i.imgur.com/1UEmBN5.png' },
+            { name: 'جورب', url: 'https://i.imgur.com/cV25GC9.png' },
+            { name: 'جبن', url: 'https://i.imgur.com/nc8njcj.png' },
+            { name: 'لحم', url: 'https://i.imgur.com/jQvWLPZ.png' },
+            { name: 'قطن', url: 'https://i.imgur.com/VcJHy4z.png' },
+            { name: 'قبعة', url: 'https://i.imgur.com/FHjeX0s.png' },
+            { name: 'شوكة', url: 'https://imgur.com/KtcVg8U.png' },
+            { name: 'ذرة', url: 'https://imgur.com/kWeisx7.png' },
+            { name: 'صوف', url: 'https://imgur.com/AXTTcXb.png' },
+            { name: 'بازلا', url: 'https://imgur.com/uwUwQqs.png' },
+            { name: 'كيك', url: 'https://imgur.com/Q8JixWn.png' },
+            { name: 'كباب', url: 'https://imgur.com/ys5L23M.png' }
+        ];
+
+        // تحميل الصور مسبقًا لتحسين الأداء
+        function preloadImages() {
+            images.forEach(img => {
+                const image = new Image();
+                image.src = img.url;
+            });
+        }
+
+        // الحصول على تاريخ السعودية الحالي
+        function getCurrentKsaDateString() {
+            const now = new Date();
+            const ksaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // توقيت السعودية (UTC+3)
+            const year = ksaTime.getUTCFullYear();
+            const month = (ksaTime.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = ksaTime.getUTCDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // التحقق مما إذا كان Local Storage متاحًا
+        function isLocalStorageAvailable() {
+            let storage;
+            try {
+                storage = window.localStorage;
+                const x = '__storage_test__';
+                storage.setItem(x, x);
+                storage.removeItem(x);
+                return true;
+            } catch (e) {
+                return e instanceof DOMException && (
+                    e.code === 22 ||
+                    e.code === 1014 ||
+                    e.name === 'QuotaExceededError' ||
+                    e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+                    (storage && storage.length !== 0);
+            }
+        }
+
+        // المتغيرات العالمية للعبة
+        let squares = []; // المربعات الموجودة في حاوية اللعب
+        let squaresInBlue = []; // المربعات الموجودة في المستطيل الأزرق
+        let gameStarted = false;
+        let startTime;
+        let timerInterval;
+        let playerName = localStorage.getItem('playerName') || '';
+        let playerAvatar = localStorage.getItem('playerAvatar') || 'https://i.imgur.com/8Km9tLL.png';
+        let leaderboard = [];
+        let isWinProcessed = false;
+        let totalSquaresCount = 0; // العدد الكلي للمربعات في اللعبة
+        let removedSquaresCount = 0; // عدد المربعات التي تم إزالتها
+
+        // تحميل بيانات لوحة الصدارة من Firebase
+        async function loadLeaderboardData() {
+            const currentKsaDate = getCurrentKsaDateString();
+            try {
+                const scoresCol = fb.collection(db, 'leaderboard_scores');
+                const q = fb.query(scoresCol,
+                    fb.where('ksaDate', '==', currentKsaDate),
+                    fb.orderBy('scoreTime', 'asc'),
+                    fb.limit(10));
+                const querySnapshot = await fb.getDocs(q);
+                const dailyScores = [];
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        dailyScores.push({
+                            id: doc.id,
+                            playerName: data.playerName,
+                            playerAvatar: data.playerAvatar || 'https://i.imgur.com/8Km9tLL.png',
+                            scoreTime: data.scoreTime,
+                            ksaDate: data.ksaDate
+                        });
+                    });
+                }
+                leaderboard = dailyScores;
+                return dailyScores;
+            } catch (error) {
+                console.error("Error loading leaderboard data:", error);
+                leaderboard = [];
+                return [];
+            }
+        }
+
+        // تحديث نسبة التقدم في اللعب
+        function updateGameProgress() {
+            const progressPercentageElement = document.getElementById('progress-percentage');
+            if (progressPercentageElement) {
+                if (totalSquaresCount > 0) {
+                    const percentage = Math.floor((removedSquaresCount / totalSquaresCount) * 100);
+                    progressPercentageElement.textContent = percentage;
+                } else {
+                    progressPercentageElement.textContent = '0';
+                }
+            }
+        }
+
+        // بدء اللعبة
+        function startGame() {
+            isWinProcessed = false;
+            clearInterval(timerInterval);
+            gameStarted = true;
+
+            // إخفاء شاشات النتائج والقائمة الرئيسية
+            const winScreen = document.getElementById('win-screen');
+            if (winScreen) winScreen.style.display = 'none';
+            const loseScreen = document.getElementById('lose-screen');
+            if (loseScreen) loseScreen.style.display = 'none';
+            const mainMenu = document.getElementById('main-menu');
+            if (mainMenu) mainMenu.style.display = 'none';
+
+            // إظهار عناصر اللعب
+            const blueRect = document.getElementById('blue-rectangle');
+            if (blueRect) blueRect.style.display = 'flex';
+            const squaresCont = document.getElementById('squares-container');
+            if (squaresCont) squaresCont.style.display = 'block';
+            const playerInfoDiv = document.getElementById('player-info');
+            if (playerInfoDiv) playerInfoDiv.style.display = 'flex';
+            const exitBtn = document.getElementById('exit-button');
+            if (exitBtn) exitBtn.style.display = 'block';
+
+            // إعادة تهيئة المربعات
+            squares.forEach(square => {
+                if (square.parentNode) {
+                    square.parentNode.removeChild(square);
+                }
+            });
+            squares = [];
+            squaresInBlue = [];
+            removedSquaresCount = 0; // إعادة تعيين عدد المربعات التي تم إزالتها
+
+            const blueRectangleDOM = document.getElementById('blue-rectangle');
+            if (blueRectangleDOM) {
+                blueRectangleDOM.innerHTML = '';
+            }
+
+            const squaresContainer = document.getElementById('squares-container');
+            if (!squaresContainer) {
+                console.error("squares-container not found!");
+                return;
+            }
+
+            const containerWidth = squaresContainer.clientWidth;
+            const containerHeight = squaresContainer.clientHeight;
+            const squareSize = 60; // حجم المربع 60 بكسل
+
+            let allSquares = [];
+            // إنشاء 18 نسخة من كل نوع من الصور
+            images.forEach(img => {
+                for (let i = 0; i < 18; i++) {
+                    allSquares.push({ ...img });
+                }
+            });
+
+            totalSquaresCount = allSquares.length; // تعيين العدد الكلي للمربعات
+            updateGameProgress(); // تحديث التقدم الأولي
+
+            // خلط المربعات عشوائياً
+            for (let i = allSquares.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allSquares[i], allSquares[j]] = [allSquares[j], allSquares[i]];
+            }
+
+            // تحديد المواقع للمربعات بشكل عشوائي للسماح بالتداخل
+            const padding = 10; // مسافة داخلية لتجنب الحواف
+            const availableWidth = containerWidth - (2 * padding);
+            const availableHeight = containerHeight - (2 * padding);
+
+            for (let i = 0; i < allSquares.length; i++) {
+                const randomX = padding + Math.random() * (availableWidth - squareSize);
+                const randomY = padding + Math.random() * (availableHeight - squareSize);
+
+                const img = allSquares[i];
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.style.backgroundImage = `url(${img.url})`;
+                square.dataset.image = img.url;
+                square.dataset.name = img.name;
+                square.style.left = randomX + 'px';
+                square.style.top = randomY + 'px';
+                square.dataset.rotation = 0; // بدون استدارة
+                square.style.transform = `rotate(0deg)`; // بدون استدارة
+                square.style.zIndex = 100 - i; // لترتيب التداخل (الأحدث يظهر فوق الأقدم)
+                square.dataset.coveredBy = JSON.stringify([]); // المربعات التي تغطي هذا المربع
+                squaresContainer.appendChild(square);
+                squares.push(square);
+            }
+
+
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            // تأثير ظهور المربعات عند بدء اللعب
+            squares.forEach((square, index) => {
+                setTimeout(() => {
+                    square.style.opacity = '0';
+                    square.style.transform = `rotate(0deg) scale(0.5)`; // بدون استدارة
+                    setTimeout(() => {
+                        square.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                        square.style.opacity = '1';
+                        square.style.transform = `rotate(0deg) scale(1)`; // بدون استدارة
+                    }, 10);
+                }, index * 8); // تأخير بسيط لكل مربع
+            });
+
+            // إضافة مستمعي الأحداث بعد ظهور المربعات
+            setTimeout(() => {
+                updateCoveredSquares(); // تحديث المربعات المغطاة
+                squares.forEach((square, index) => {
+                    const handleHover = () => {
+                        if (gameStarted) {
+                            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+                            if (coveredBy.length === 0) {
+                                square.style.transition = 'transform 0.2s ease';
+                                square.style.transform = `rotate(0deg) scale(1.15)`; // بدون استدارة
+                                square.style.boxShadow = '4px 4px 12px rgba(0,0,0,0.5)';
+                                square.style.zIndex = 1000; // رفع z-index عند التحويم
+                            }
+                        }
+                    };
+                    const handleHoverEnd = () => {
+                        square.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                        square.style.transform = `rotate(0deg) scale(1)`; // بدون استدارة
+                        square.style.boxShadow = '3px 3px 10px rgba(0,0,0,0.3)';
+                        square.style.zIndex = 100 - index; // إعادة z-index الأصلي
+                    };
+
+                    square.addEventListener('mouseenter', handleHover);
+                    square.addEventListener('mouseleave', handleHoverEnd);
+                    square.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        handleSquareClick(square, index);
+                    });
+                    square.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        handleSquareClick(square, index);
+                    }, { passive: false });
+                });
+            }, 600); // تأخير لضمان ظهور المربعات قبل إضافة المستمعين
+        }
+
+        // وظيفة للتحقق من تداخل مستطيلين
+        function isOverlapping(rect1, rect2) {
+            const margin = 5; // هامش صغير لتجنب التداخلات الطفيفة
+            return !(rect1.right - margin < rect2.left + margin ||
+                rect1.left + margin > rect2.right - margin ||
+                rect1.bottom - margin < rect2.top + margin ||
+                rect1.top + margin > rect2.bottom - margin);
+        }
+
+        // التعامل مع النقر على المربع
+        function handleSquareClick(square, index) {
+            if (!gameStarted) return;
+
+            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+            if (coveredBy.length === 0) {
+                dropSquare(square, index);
+            } else {
+                square.classList.add('shake'); // إضافة تأثير الاهتزاز
+                setTimeout(() => {
+                    square.classList.remove('shake');
+                }, 400);
+            }
+        }
+
+        // تحديث حالة المربعات المغطاة
+        function updateCoveredSquares() {
+            requestAnimationFrame(() => {
+                squares.forEach(square => {
+                    square.dataset.coveredBy = JSON.stringify([]);
+                });
+
+                for (let i = 0; i < squares.length; i++) {
+                    if (squares[i].style.display === 'none') continue; // تجاهل المربعات المخفية
+                    const rect1 = squares[i].getBoundingClientRect();
+
+                    for (let j = i + 1; j < squares.length; j++) {
+                        if (squares[j].style.display === 'none') continue; // تجاهل المربعات المخفية
+                        const rect2 = squares[j].getBoundingClientRect();
+
+                        if (isOverlapping(rect1, rect2)) {
+                            // إذا كان المربع i فوق المربع j
+                            if (parseInt(squares[i].style.zIndex) < parseInt(squares[j].style.zIndex)) {
+                                const coveredByList = JSON.parse(squares[i].dataset.coveredBy || '[]');
+                                if (!coveredByList.includes(j)) {
+                                    coveredByList.push(j);
+                                    squares[i].dataset.coveredBy = JSON.stringify(coveredByList);
+                                }
+                            } else { // إذا كان المربع j فوق المربع i
+                                const coveredByList = JSON.parse(squares[j].dataset.coveredBy || '[]');
+                                if (!coveredByList.includes(i)) {
+                                    coveredByList.push(i);
+                                    squares[j].dataset.coveredBy = JSON.stringify(coveredByList);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // تطبيق أو إزالة فئة 'covered' بناءً على حالة التغطية
+                squares.forEach(square => {
+                    const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+                    if (coveredBy.length > 0) {
+                        if (!square.classList.contains('covered')) {
+                            square.style.transition = 'box-shadow 0.3s ease';
+                            square.classList.add('covered');
+                        }
+                    } else {
+                        if (square.classList.contains('covered')) {
+                            square.style.transition = 'box-shadow 0.3s ease';
+                            square.classList.remove('covered');
+                        }
+                    }
+                });
+
+                checkGameEnd(); // التحقق من نهاية اللعبة بعد كل تحديث
+            });
+        }
+
+
+        // تحديث مؤقت اللعبة
+        function updateTimer() {
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            const winTime = document.getElementById('win-time');
+            if (winTime) winTime.textContent = `${minutes}:${seconds}`;
+        }
+
+        // إسقاط المربع إلى المستطيل الأزرق
+        function dropSquare(square, index) {
+            const blueRectangle = document.getElementById('blue-rectangle');
+            if (!blueRectangle) {
+                console.error("blue-rectangle not found!");
+                return;
+            }
+
+            // إذا كان المستطيل الأزرق ممتلئًا، تظهر شاشة الخسارة
+            if (squaresInBlue.length >= 7) {
+                showLoseScreen();
+                return;
+            }
+
+            const startRect = square.getBoundingClientRect();
+            const gameContainer = document.getElementById('game-container');
+            if (!gameContainer) {
+                console.error("game-container not found!");
+                return;
+            }
+            const containerRect = gameContainer.getBoundingClientRect();
+            const blueRect = blueRectangle.getBoundingClientRect();
+
+            // حساب الإحداثيات النسبية للحركة
+            const startX = startRect.left - containerRect.left;
+            const startY = startRect.top - containerRect.top;
+
+            // تحديد موقع النهاية داخل المستطيل الأزرق (من اليمين إلى اليسار)
+            // 44px عرض المربع, 8px gap
+            const targetXInBlue = blueRectangle.clientWidth - (squaresInBlue.length * (44 + 8)) - 44;
+            const endX = blueRect.left - containerRect.left + targetXInBlue;
+            const endY = blueRect.top - containerRect.top + (blueRectangle.clientHeight / 2) - (square.clientHeight / 2);
+
+            // تعيين متغيرات CSS للرسوم المتحركة
+            square.style.setProperty('--initial-rotation', `0deg`);
+            square.style.setProperty('--final-rotation', `0deg`);
+            square.style.setProperty('--start-x', `${startX}px`);
+            square.style.setProperty('--start-y', `${startY}px`);
+            square.style.setProperty('--end-x', `${endX - startX}px`); /* المسافة التي سيتحركها المربع أفقياً */
+            square.style.setProperty('--end-y', `${endY - startY}px`); /* المسافة التي سيتحركها المربع عمودياً */
+
+            square.classList.add('sliding-to-blue'); // إضافة فئة لتشغيل الرسوم المتحركة
+
+            // بعد انتهاء الرسوم المتحركة
+            setTimeout(() => {
+                const squareInBlue = document.createElement('div');
+                squareInBlue.className = 'square-in-blue';
+                squareInBlue.style.backgroundImage = square.style.backgroundImage;
+                squareInBlue.dataset.image = square.dataset.image;
+                squareInBlue.dataset.name = square.dataset.name;
+                squareInBlue.style.opacity = '0';
+                squareInBlue.style.transform = 'scale(0.5) rotate(0deg)';
+
+                // إضافة المربع إلى المستطيل الأزرق في البداية (من اليمين)
+                blueRectangle.prepend(squareInBlue);
+                squaresInBlue.unshift(squareInBlue); // إضافة إلى بداية المصفوفة للحفاظ على الترتيب
+
+                setTimeout(() => {
+                    squareInBlue.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    squareInBlue.style.opacity = '1';
+                    squareInBlue.style.transform = 'scale(1) rotate(0deg)';
+                }, 10);
+
+                square.style.display = 'none'; // إخفاء المربع الأصلي
+                square.classList.remove('sliding-to-blue'); // إزالة فئة الرسوم المتحركة
+                removedSquaresCount++; // زيادة عدد المربعات التي تم إزالتها
+                updateGameProgress(); // تحديث التقدم
+
+                updateCoveredSquares(); // تحديث المربعات المغطاة
+                checkAndRemoveMatchingSquares(); // التحقق من المربعات المتطابقة
+            }, 500); // يجب أن يتطابق هذا التأخير مع مدة الرسوم المتحركة
+        }
+
+
+        // التحقق من المربعات المتطابقة وإزالتها
+        function checkAndRemoveMatchingSquares() {
+            const imageCount = {};
+            squaresInBlue.forEach(square => {
+                const image = square.dataset.image;
+                imageCount[image] = (imageCount[image] || 0) + 1;
+            });
+
+            for (const image in imageCount) {
+                if (imageCount[image] >= 3) {
+                    const matchingSquares = [];
+                    squaresInBlue.forEach((square, index) => {
+                        if (square.dataset.image === image) {
+                            matchingSquares.push({ square, index });
+                        }
+                    });
+                    removeMatchingSquares(matchingSquares.slice(0, 3), image); // إزالة أول 3 مربعات متطابقة
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // إزالة المربعات المتطابقة من المستطيل الأزرق
+        function removeMatchingSquares(matchingSquares, image) {
+            const gameContainer = document.getElementById('game-container');
+            if (!gameContainer) {
+                console.error("game-container not found for match effect!");
+                return;
+            }
+
+            // تأثير بصري عند إزالة المربعات
+            const effect = document.createElement('div');
+            effect.className = 'match-effect'; // يمكن إضافة ستايل لهذا التأثير
+            gameContainer.appendChild(effect);
+
+            const firstSquareRect = matchingSquares[0].square.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            effect.style.left = `${firstSquareRect.left + firstSquareRect.width / 2 - containerRect.left}px`;
+            effect.style.top = `${firstSquareRect.top + firstSquareRect.height / 2 - containerRect.top}px`;
+
+            matchingSquares.forEach(({ square }) => {
+                square.classList.add('fast-disappear'); // تأثير اختفاء سريع
+                setTimeout(() => {
+                    if (square.parentNode) {
+                        square.parentNode.removeChild(square);
+                    }
+                }, 300);
+            });
+
+            // إزالة المربعات من مصفوفة squaresInBlue
+            squaresInBlue = squaresInBlue.filter(square => !matchingSquares.some(ms => ms.square === square));
+
+            // إعادة ترتيب المربعات المتبقية في المستطيل الأزرق
+            setTimeout(() => {
+                const blueRectangle = document.getElementById('blue-rectangle');
+                if (!blueRectangle) return;
+
+                const children = Array.from(blueRectangle.children);
+                children.forEach((child, index) => {
+                    child.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    // يمكن تعديل هذا التحويل لترتيبها بشكل أفضل
+                    child.style.transform = `translateX(${index * 5}px)`;
+                });
+
+                setTimeout(() => {
+                    children.forEach(child => {
+                        child.style.transition = 'transform 0.3s ease';
+                        child.style.transform = 'translateX(0)';
+                    });
+                }, 500);
+
+                checkGameEnd(); // التحقق من نهاية اللعبة بعد الإزالة
+            }, 350);
+        }
+
+        // التحقق من نهاية اللعبة (فوز أو خسارة)
+        function checkGameEnd() {
+            const remainingSquares = squares.filter(square => square.style.display !== 'none' && !square.classList.contains('sliding-to-blue'));
+
+            if (remainingSquares.length === 0 && squaresInBlue.length === 0) {
+                // إذا لم يتبق أي مربعات في حاوية اللعب والمستطيل الأزرق فارغ = فوز
+                if (!isWinProcessed) {
+                    isWinProcessed = true;
+                    showWinScreen();
+                }
+            } else if (squaresInBlue.length >= 7) {
+                // إذا امتلأ المستطيل الأزرق بـ 7 مربعات
+                const imageCount = {};
+                squaresInBlue.forEach(square => {
+                    const image = square.dataset.image;
+                    imageCount[image] = (imageCount[image] || 0) + 1;
+                });
+
+                let hasMatch = false;
+                for (const image in imageCount) {
+                    if (imageCount[image] >= 3) {
+                        hasMatch = true;
+                        break;
+                    }
+                }
+
+                if (!hasMatch) {
+                    // إذا لم يكن هناك أي تطابق ممكن = خسارة
+                    if (!isWinProcessed) {
+                        showLoseScreen();
+                    }
+                }
+            }
+        }
+
+        // عرض شاشة الفوز
+        async function showWinScreen() {
+            clearInterval(timerInterval);
+            const elapsed = Math.floor((new Date() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            const winTime = document.getElementById('win-time');
+            if (winTime) winTime.textContent = `${minutes}:${seconds}`;
+
+            const winScreen = document.getElementById('win-screen');
+            if (winScreen) {
+                winScreen.style.display = 'block';
+                winScreen.style.opacity = '0';
+                winScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
+                setTimeout(() => {
+                    winScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    winScreen.style.opacity = '1';
+                    winScreen.style.transform = 'scale(1) translate(-50%, -50%)';
+                }, 10);
+            }
+
+            try {
+                await addToLeaderboard(playerName, playerAvatar, elapsed);
+            } catch (e) {
+                console.error("Error adding to leaderboard:", e);
+            }
+
+            const playerInfoDiv = document.getElementById('player-info');
+            if (playerInfoDiv) playerInfoDiv.style.display = 'none';
+            const exitBtn = document.getElementById('exit-button');
+            if (exitBtn) exitBtn.style.display = 'none';
+        }
+
+        // عرض شاشة الخسارة
+        function showLoseScreen() {
+            clearInterval(timerInterval);
+            const loseScreen = document.getElementById('lose-screen');
+            if (loseScreen) {
+                loseScreen.style.display = 'block';
+                loseScreen.style.opacity = '0';
+                loseScreen.style.transform = 'scale(0.8) translate(-50%, -50%)';
+                setTimeout(() => {
+                    loseScreen.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    loseScreen.style.opacity = '1';
+                    loseScreen.style.transform = 'scale(1) translate(-50%, -50%)';
+                }, 10);
+            }
+            const playerInfoDiv = document.getElementById('player-info');
+            if (playerInfoDiv) playerInfoDiv.style.display = 'none';
+            const exitBtn = document.getElementById('exit-button');
+            if (exitBtn) exitBtn.style.display = 'none';
+        }
+
+        // العودة إلى القائمة الرئيسية
+        function backToMainMenu() {
+            clearInterval(timerInterval);
+            gameStarted = false;
+            document.querySelectorAll('.result-screen, .profile-screen, .leaderboard-screen').forEach(screen => {
+                screen.style.display = 'none';
+            });
+
+            const blueRect = document.getElementById('blue-rectangle');
+            if (blueRect) blueRect.style.display = 'none';
+            const squaresCont = document.getElementById('squares-container');
+            if (squaresCont) squaresCont.style.display = 'none';
+            const playerInfoDiv = document.getElementById('player-info');
+            if (playerInfoDiv) playerInfoDiv.style.display = 'none';
+            const exitBtn = document.getElementById('exit-button');
+            if (exitBtn) exitBtn.style.display = 'none';
+
+            squares.forEach(square => {
+                if (square.parentNode) {
+                    square.parentNode.removeChild(square);
+                }
+            });
+            squares = [];
+            squaresInBlue = [];
+            removedSquaresCount = 0; // إعادة تعيين عدد المربعات التي تم إزالتها
+            updateGameProgress(); // تحديث التقدم
+
+            const blueRectangleDOM = document.getElementById('blue-rectangle');
+            if (blueRectangleDOM) {
+                blueRectangleDOM.innerHTML = '';
+            }
+
+            const mainMenu = document.getElementById('main-menu');
+            if (mainMenu) mainMenu.style.display = 'flex';
+        }
+
+        // عرض شاشة الملف الشخصي
+        function showProfileScreen() {
+            const mainMenu = document.getElementById('main-menu');
+            if (mainMenu) mainMenu.style.display = 'none';
+            const profileScreen = document.getElementById('profile-screen');
+            if (profileScreen) profileScreen.style.display = 'flex';
+        }
+
+        // حفظ بيانات الملف الشخصي
+        function saveProfile() {
+            const nameInput = document.getElementById('player-name');
+            if (!nameInput || !nameInput.value.trim()) {
+                // استخدام رسالة مخصصة بدلاً من alert
+                displayMessage('الرجاء إدخال اسم اللاعب', 'error');
+                return;
+            }
+
+            const oldName = playerName;
+            const newName = nameInput.value.trim();
+            const avatarPreviewImg = document.querySelector('#avatar-preview img');
+            let currentSelectedAvatar = playerAvatar;
+
+            // إذا كانت الصورة المختارة هي Data URL (من ملف محلي)
+            if (avatarPreviewImg && avatarPreviewImg.src.startsWith('data:image')) {
+                currentSelectedAvatar = avatarPreviewImg.src;
+            }
+
+            playerName = newName;
+            playerAvatar = currentSelectedAvatar;
+
+            // حفظ في Local Storage
+            localStorage.setItem('playerName', playerName);
+            localStorage.setItem('playerAvatar', playerAvatar);
+
+            // تحديث عرض الاسم والصورة في واجهة اللعب
+            const playerNameDisplay = document.getElementById('player-name-display');
+            if (playerNameDisplay) playerNameDisplay.textContent = playerName;
+            const playerAvatarImg = document.getElementById('player-avatar');
+            if (playerAvatarImg) playerAvatarImg.src = playerAvatar;
+
+            // تحديث لوحة الصدارة إذا تغير الاسم أو الصورة
+            if (oldName && oldName !== playerName) {
+                updateLeaderboardWithNewName(oldName, playerName);
+            } else if (oldName === playerName && playerAvatar !== localStorage.getItem('playerAvatar_before_save')) {
+                // إذا لم يتغير الاسم ولكن تغيرت الصورة، حدث لوحة الصدارة
+                updateLeaderboardWithNewName(playerName, playerName);
+            }
+            localStorage.setItem('playerAvatar_before_save', playerAvatar); // حفظ الصورة قبل الحفظ للمقارنة لاحقاً
+
+            backToMainMenu();
+        }
+
+        // تحديث اسم اللاعب في لوحة الصدارة (عند تغيير الاسم في الملف الشخصي)
+        async function updateLeaderboardWithNewName(oldName, newName) {
+            const currentAvatarUrl = playerAvatar || 'https://i.imgur.com/8Km9tLL.png';
+            const scoresColRef = fb.collection(db, 'leaderboard_scores');
+            const q = fb.query(scoresColRef, fb.where('playerName', '==', oldName));
+
+            try {
+                const querySnapshot = await fb.getDocs(q);
+                if (querySnapshot.empty) {
+                    await loadLeaderboardData();
+                    updateLeaderboard();
+                    return;
+                }
+
+                const updatePromises = [];
+                querySnapshot.forEach((docSnapshot) => {
+                    const docRef = fb.doc(db, 'leaderboard_scores', docSnapshot.id);
+                    updatePromises.push(
+                        fb.updateDoc(docRef, {
+                            playerName: newName,
+                            playerAvatar: currentAvatarUrl
+                        }).catch(error => {
+                            console.error(`[updateLeaderboardWithNewName] Error updating document ${docSnapshot.id}:`, error);
+                        })
+                    );
+                });
+                await Promise.all(updatePromises);
+            } catch (error) {
+                console.error(`[updateLeaderboardWithNewName] Error querying or processing scores for "${oldName}":`, error);
+            }
+
+            await loadLeaderboardData(); // إعادة تحميل لوحة الصدارة بعد التحديث
+            updateLeaderboard(); // تحديث عرض لوحة الصدارة
+        }
+
+        // إضافة نتيجة اللاعب إلى لوحة الصدارة
+        async function addToLeaderboard(name, avatar, timeInSeconds) {
+            const currentKsaDate = getCurrentKsaDateString();
+            const currentAvatar = playerAvatar || 'https://i.imgur.com/8Km9tLL.png';
+            const currentName = playerName || name;
+
+            if (!currentName || currentName.trim() === "") {
+                displayMessage("اسم اللاعب فارغ. لا يمكن حفظ النتيجة.", 'error');
+                return;
+            }
+
+            try {
+                const scoresCol = fb.collection(db, 'leaderboard_scores');
+                const q = fb.query(scoresCol,
+                    fb.where('playerName', '==', currentName),
+                    fb.where('ksaDate', '==', currentKsaDate)
+                );
+                const querySnapshot = await fb.getDocs(q);
+
+                let bestExistingDocId = null;
+                let bestExistingScoreTime = Infinity;
+                const docsToEvaluate = [];
+
+                querySnapshot.forEach((doc) => {
+                    const scoreData = doc.data();
+                    docsToEvaluate.push({ id: doc.id, ...scoreData });
+                });
+
+                // فرز المستندات الموجودة للعثور على الأفضل
+                docsToEvaluate.sort((a, b) => a.scoreTime - b.scoreTime);
+
+                const docsToDelete = [];
+                if (docsToEvaluate.length > 0) {
+                    bestExistingDocId = docsToEvaluate[0].id;
+                    bestExistingScoreTime = docsToEvaluate[0].scoreTime;
+                    // حذف أي مستندات مكررة لنفس اللاعب في نفس اليوم
+                    for (let i = 1; i < docsToEvaluate.length; i++) {
+                        docsToDelete.push(docsToEvaluate[i].id);
+                    }
+                }
+
+                // تنفيذ عمليات الحذف
+                for (const docIdToDelete of docsToDelete) {
+                    try {
+                        await fb.deleteDoc(fb.doc(db, 'leaderboard_scores', docIdToDelete));
+                    } catch (deleteError) {
+                        console.error(`[addToLeaderboard] Error deleting doc ID ${docIdToDelete}:`, deleteError);
+                    }
+                }
+
+                if (bestExistingDocId) {
+                    // إذا كان هناك سجل موجود، قارن الوقت
+                    if (timeInSeconds < bestExistingScoreTime) {
+                        const docRef = fb.doc(db, 'leaderboard_scores', bestExistingDocId);
+                        await fb.updateDoc(docRef, {
+                            scoreTime: timeInSeconds,
+                            playerAvatar: currentAvatar,
+                            createdAt: fb.serverTimestamp() // تحديث الطابع الزمني
+                        });
+                    } else {
+                        // إذا كان الوقت الحالي ليس أفضل، فقط حدث الصورة إذا كانت مختلفة
+                        const existingDocData = docsToEvaluate.find(d => d.id === bestExistingDocId);
+                        if (existingDocData && existingDocData.playerAvatar !== currentAvatar) {
+                            const docRef = fb.doc(db, 'leaderboard_scores', bestExistingDocId);
+                            await fb.updateDoc(docRef, { playerAvatar: currentAvatar });
+                        }
+                    }
+                } else {
+                    // إذا لم يكن هناك سجل موجود، أضف سجلًا جديدًا
+                    await fb.addDoc(scoresCol, {
+                        playerName: currentName,
+                        playerAvatar: currentAvatar,
+                        scoreTime: timeInSeconds,
+                        ksaDate: currentKsaDate,
+                        createdAt: fb.serverTimestamp()
+                    });
+                }
+
+                await loadLeaderboardData(); // إعادة تحميل لوحة الصدارة بعد التحديث
+                updateLeaderboard(); // تحديث عرض لوحة الصدارة
+            } catch (error) {
+                console.error('[addToLeaderboard] General error:', error.message);
+            }
+        }
+
+        // تحديث عرض لوحة الصدارة في الواجهة
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            if (!leaderboardList) {
+                return;
+            }
+            leaderboardList.innerHTML = ''; // مسح القائمة الحالية
+
+            const topPlayers = leaderboard.slice(0, 10); // عرض أفضل 10 لاعبين
+            topPlayers.forEach((player, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.innerHTML = `
+                    <div class="leaderboard-rank">${index + 1}</div>
+                    <img class="leaderboard-avatar" src="${player.playerAvatar || 'https://i.imgur.com/8Km9tLL.png'}" alt="صورة اللاعب">
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">${player.playerName}</div>
+                        <div class="leaderboard-time">${formatTime(player.scoreTime)}</div>
+                    </div>
+                `;
+                leaderboardList.appendChild(item);
+            });
+        }
+
+        // تنسيق الوقت للعرض
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        // عرض شاشة لوحة الصدارة
+        async function showLeaderboard() {
+            try {
+                await loadLeaderboardData(); // تحميل أحدث البيانات
+                updateLeaderboard(); // تحديث العرض
+                const mainMenu = document.getElementById('main-menu');
+                if (mainMenu) mainMenu.style.display = 'none';
+                const leaderboardScreen = document.getElementById('leaderboard-screen');
+                if (leaderboardScreen) leaderboardScreen.style.display = 'flex';
+            } catch (error) {
+                console.error("Error showing leaderboard:", error);
+                leaderboard = []; // مسح لوحة الصدارة في حالة الخطأ
+                updateLeaderboard();
+                const mainMenu = document.getElementById('main-menu');
+                if (mainMenu) mainMenu.style.display = 'none';
+                const leaderboardScreen = document.getElementById('leaderboard-screen');
+                if (leaderboardScreen) leaderboardScreen.style.display = 'flex';
+            }
+        }
+
+        // وظيفة لعرض رسائل للمستخدم بدلاً من alert
+        function displayMessage(message, type = 'info') {
+            const gameContainer = document.getElementById('game-container');
+            if (!gameContainer) return;
+
+            const messageBox = document.createElement('div');
+            messageBox.className = `message-box ${type}`;
+            messageBox.textContent = message;
+            Object.assign(messageBox.style, {
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: type === 'error' ? '#f44336' : '#4CAF50',
+                color: 'white',
+                padding: '15px 25px',
+                borderRadius: '10px',
+                zIndex: '9999',
+                opacity: '0',
+                transition: 'opacity 0.5s ease-in-out',
+                textAlign: 'center',
+                boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                fontFamily: 'Tajawal, sans-serif',
+                fontWeight: 'bold'
+            });
+
+            gameContainer.appendChild(messageBox);
+
+            setTimeout(() => {
+                messageBox.style.opacity = '1';
+            }, 10);
+
+            setTimeout(() => {
+                messageBox.style.opacity = '0';
+                messageBox.addEventListener('transitionend', () => messageBox.remove());
+            }, 3000);
+        }
+
+
+        // تهيئة اللعبة عند التحميل
+        function initGame() {
+            preloadImages(); // تحميل الصور مسبقًا
+
+            // إخفاء جميع الشاشات في البداية
+            document.getElementById('main-menu').style.display = 'flex';
+            document.getElementById('blue-rectangle').style.display = 'none';
+            document.getElementById('squares-container').style.display = 'none';
+            document.getElementById('player-info').style.display = 'none';
+            document.getElementById('exit-button').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('lose-screen').style.display = 'none';
+            document.getElementById('profile-screen').style.display = 'none';
+            document.getElementById('leaderboard-screen').style.display = 'none';
+
+            // إعداد وظائف الأزرار
+            document.getElementById('start-button').onclick = function () {
+                if (!playerName) {
+                    showProfileScreen(); // إذا لم يكن هناك اسم لاعب، اذهب إلى شاشة الملف الشخصي
+                    displayMessage('الرجاء إدخال اسم اللاعب أولاً.', 'info');
+                    return;
+                }
+                startGame();
+                document.getElementById('main-menu').style.display = 'none';
+            };
+
+            document.getElementById('profile-button').onclick = function () {
+                showProfileScreen();
+            };
+
+            document.getElementById('leaderboard-button').onclick = function () {
+                showLeaderboard();
+            };
+
+            document.getElementById('exit-button').onclick = function () {
+                backToMainMenu();
+            };
+
+            // التعامل مع تحميل صورة الملف الشخصي
+            const avatarPreview = document.getElementById('avatar-preview');
+            const avatarUpload = document.getElementById('avatar-upload');
+            if (avatarUpload) {
+                avatarUpload.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            avatarPreview.innerHTML = `<img src="${event.target.result}" alt="صورة اللاعب">`;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // تحميل بيانات اللاعب من Local Storage
+            const storedAvatar = localStorage.getItem('playerAvatar') || 'https://i.imgur.com/8Km9tLL.png';
+            playerAvatar = storedAvatar;
+            if (avatarPreview) {
+                if (storedAvatar && storedAvatar !== 'https://i.imgur.com/8Km9tLL.png') {
+                    avatarPreview.innerHTML = ``; // إزالة النص عند وجود صورة
+                    const imgElement = document.createElement('img');
+                    imgElement.src = storedAvatar;
+                    imgElement.alt = 'صورة اللاعب';
+                    avatarPreview.appendChild(imgElement);
+                } else {
+                    avatarPreview.innerHTML = `<span>اضغط لاختيار صورة</span>`;
+                }
+            }
+            const playerAvatarImg = document.getElementById('player-avatar');
+            if (playerAvatarImg) playerAvatarImg.src = storedAvatar;
+
+            const storedName = localStorage.getItem('playerName') || '';
+            playerName = storedName;
+            const playerNameInput = document.getElementById('player-name');
+            if (playerNameInput) playerNameInput.value = storedName;
+            const playerNameDisplay = document.getElementById('player-name-display');
+            if (playerNameDisplay) playerNameDisplay.textContent = storedName || 'اللاعب';
+
+            // تحميل لوحة الصدارة عند التهيئة
+            loadLeaderboardData().then(updateLeaderboard);
+            updateGameProgress(); // تحديث التقدم الأولي عند التحميل
+        }
+
+        // إضافة مستمع لحدث تحميل النافذة لبدء تهيئة اللعبة
+        window.addEventListener('load', initGame);
+
+        // جعل بعض الوظائف متاحة عالميًا (للوصول إليها من HTML)
+        window.initGame = initGame;
+        window.startGame = startGame;
+        window.backToMainMenu = backToMainMenu;
+        window.saveProfile = saveProfile;
+        window.showLeaderboard = showLeaderboard;
+        window.showProfileScreen = showProfileScreen;
+        window.updateLeaderboardWithNewName = updateLeaderboardWithNewName;
+    </script>
+</body>
+
+</html>

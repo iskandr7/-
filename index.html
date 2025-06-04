@@ -2,23 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User's Game</title>
+    <title>User's Full Game Code</title>
     <style>
-        /* Minimal styles to make containers visible */
+        /* Styles as previously defined/accumulated */
         #game-container { width: 80vw; height: 80vh; border: 1px solid black; position: relative; margin: auto; }
         #blue-rectangle {
             width: 90%; height: 60px; background-color: lightblue; position: absolute; bottom: 10px; left: 5%;
             display: flex; align-items: center; padding: 0 5px; box-sizing: border-box; border: 1px solid blue;
+            overflow-x: auto; /* Allow scrolling if many squares */
         }
         .square-in-blue {
-            width: 50px; height: 50px; border: 1px solid darkblue; margin: 2px;
+            width: 50px; height: 50px; border: 1px solid darkblue; margin: 2px; flex-shrink: 0;
             background-size: cover; background-position: center;
         }
         #lifted-squares-container {
             position: absolute; top: 10px; right: 10px; border: 1px solid green; padding: 5px;
             display: flex; gap: 3px; min-height: 25px;
         }
-        /* Making lifted squares smaller */
         #lifted-squares-container .square-in-blue { width: 25px; height: 25px; }
         #tools-container {
             position: absolute; top: 10px; left: 10px; border: 1px solid orange; padding: 5px;
@@ -29,8 +29,18 @@
             background-size: cover; background-position: center; cursor: pointer;
         }
         .tool-square:hover { border-color: red; }
+        #squares-container { /* Main game area for squares */
+            position: relative; width: calc(100% - 30px); height: 400px;
+            border: 1px solid #ddd; margin: 15px; overflow: hidden;
+        }
+        .game-square { /* Class for squares in the main game area */
+            width: 50px; height: 50px; position: absolute; /* Important for positioning */
+            border: 1px solid #555; background-color: #eee;
+            background-size: cover; background-position: center;
+            display: flex; justify-content: center; align-items: center;
+        }
         .shake { animation: shake 0.4s; }
-        @keyframes shake { /* Simple shake for brevity */
+        @keyframes shake {
             0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); }
         }
     </style>
@@ -38,54 +48,156 @@
 <body>
     <div id="game-container">
         <div id="tools-container"></div>
+        <div id="squares-container"></div> {/* User's main game area */}
         <div id="lifted-squares-container"></div>
         <div id="blue-rectangle"></div>
     </div>
 
     <script type="module">
-        // --- User's Original Game Variables (Assumed) ---
+        // --- User's Original Game Variables ---
         let gameStarted = false;
-        let squares = []; // Main game board squares, not used by lift tool directly
-        let squaresInBlue = []; // Array to hold DOM elements of squares in the blue rectangle
-        let images = [ /* some image URLs */ ]; // User's image array
-
-        // Lift Tool Global Variables (Added/Ensured)
+        let squares = []; // Holds DOM elements of squares in #squares-container
+        let squaresInBlue = []; // Holds DOM elements of squares in #blue-rectangle
+        let removedSquaresCount = 0;
+        // Lift Tool Globals
         let liftedSquares = [];
         let liftToolActive = false;
         const MAX_LIFTED_SQUARES = 3;
-
-        // Finger Tool Global Variable (Added/Ensured)
+        // Finger Tool Global
         let fingerToolActive = false;
+        // Undo Tool Global Variable
+        let lastMovedSquareForUndo = null;
 
-        // Mockup of allTools and related variables from previous steps by AI
-        // Ensuring 'lift' and 'finger' tool actions are correctly defined/updated.
+        // --- Task System Global Variables ---
+        const allGameTasks = [
+            {
+                id: 'collect_3_carrots',
+                description: 'اجمع 3 جزرات',
+                targetItemName: 'جزر',
+                targetItemCount: 3,
+                relatedImageUrl: 'https://i.imgur.com/prC9PT2.png'
+            },
+            {
+                id: 'collect_3_milk',
+                description: 'اجمع 3 حليب',
+                targetItemName: 'حليب',
+                targetItemCount: 3,
+                relatedImageUrl: 'https://i.imgur.com/ifJb1W5.png'
+            },
+            {
+                id: 'collect_2_gloves',
+                description: 'اجمع قفازين',
+                targetItemName: 'قفاز',
+                targetItemCount: 2,
+                relatedImageUrl: 'https://i.imgur.com/1UEmBN5.png'
+            },
+            {
+                id: 'collect_3_cheese',
+                description: 'اجمع 3 جبن',
+                targetItemName: 'جبن',
+                targetItemCount: 3,
+                relatedImageUrl: 'https://i.imgur.com/nc8njcj.png'
+            },
+            {
+                id: 'collect_2_hats',
+                description: 'اجمع قبعتين',
+                targetItemName: 'قبعة',
+                targetItemCount: 2,
+                relatedImageUrl: 'https://i.imgur.com/FHjeX0s.png'
+            }
+        ];
+        let currentTask = null;
+        let lastTaskGeneratedId = null;
+
+        // --- `allTools` array (includes tools developed in prior steps) ---
         const allTools = [
-            { name: 'hammer', imageUrl: 'placeholder.png', id: 'hammerTool', action: () => useHammerTool() },
-            { name: 'shuffle', imageUrl: 'placeholder.png', id: 'shuffleTool', action: () => useShuffleTool() },
-            { name: 'lift', imageUrl: 'placeholder.png', id: 'liftTool', action: () => useLiftTool() },
-            { name: 'finger', imageUrl: 'placeholder.png', id: 'fingerTool', action: () => useFingerTool() }, // Added Finger tool
+            { name: 'hammer', imageUrl: 'placeholder_hammer.png', id: 'hammerTool', action: () => useHammerTool() },
+            { name: 'shuffle', imageUrl: 'placeholder_shuffle.png', id: 'shuffleTool', action: () => useShuffleTool() },
+            { name: 'lift', imageUrl: 'placeholder_lift.png', id: 'liftTool', action: () => useLiftTool() },
+            { name: 'finger', imageUrl: 'placeholder_finger.png', id: 'fingerTool', action: () => useFingerTool() },
+            { name: 'undo', imageUrl: 'placeholder_undo.png', id: 'undoTool', action: () => useUndoTool() }
         ];
         let currentGameTools = [];
         let playerEarnedTools = {};
 
-        // --- User's Original Game Functions (Assumed) ---
-        function displayMessage(message, type = 'info') {
-            console.log(`UserMessage: [${type}] ${message}`);
-            // User might have more complex UI logic here
+        // --- User's Original Game Functions ---
+        function displayMessage(message, type = 'info') { console.log(`UserMessage: [${type}] ${message}`); }
+        function checkAndRemoveMatchingSquares() { console.log("User's checkAndRemoveMatchingSquares called."); }
+        function updateGameProgress() { console.log("User's updateGameProgress called."); }
+        function updateCoveredSquares() { console.log("User's updateCoveredSquares called."); }
+
+        // User's function to create and add squares to the main game area
+        function createGameSquare(data, container) {
+            const square = document.createElement('div');
+            square.className = 'game-square';
+            square.dataset.name = data.name;
+            square.dataset.image = data.image;
+            square.style.backgroundImage = `url(${data.image})`;
+            square.style.left = data.left + 'px';
+            square.style.top = data.top + 'px';
+            square.style.zIndex = data.zIndex || '1'; // Default zIndex
+            square.dataset.coveredBy = JSON.stringify(data.coveredBy || []);
+
+            square.addEventListener('click', () => handleSquareClick(square, squares.indexOf(square)));
+            container.appendChild(square);
+            squares.push(square);
+            return square;
         }
 
-        function checkAndRemoveMatchingSquares() {
-            console.log("User's checkAndRemoveMatchingSquares called.");
-            // User's logic to check and remove matches from squaresInBlue
+        // User's function that Finger Tool modifies and Undo tool relies on
+        function handleSquareClick(square, index) {
+            if (!gameStarted) return;
+
+            // Finger tool logic (from previous step)
+            if (fingerToolActive) {
+                console.log('Finger tool used on a square:', square.dataset.name);
+                const squareDataForDrop = { name: square.dataset.name, image: square.dataset.image };
+                if (typeof dropSquare === 'function') {
+                    dropSquare(squareDataForDrop, square); // Pass the square itself (DOM element)
+                }
+                fingerToolActive = false;
+                return;
+            }
+
+            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
+            if (coveredBy.length === 0) {
+                 const squareDataForDrop = { name: square.dataset.name, image: square.dataset.image };
+                if (typeof dropSquare === 'function') {
+                    dropSquare(squareDataForDrop, square); // Pass the square itself (DOM element)
+                }
+            } else {
+                square.classList.add('shake');
+                setTimeout(() => square.classList.remove('shake'), 400);
+            }
         }
 
-        // This is the user's original dropSquare function we need to modify
-        function dropSquare(squareData, index) { // Assuming squareData is an object like {name: 'sq1', image: 'url'}
-            console.log("User's dropSquare called with:", squareData, "at index:", index);
+        // User's function that Undo tool needs to modify
+        function dropSquare(squareData, originalGameSquare) {
+            console.log("User's dropSquare called with:", squareData);
             const blueRectangle = document.getElementById('blue-rectangle');
             if (!blueRectangle || squaresInBlue.length >= 7) {
                 console.log('Blue rectangle full or not found.');
                 return false;
+            }
+
+            if (originalGameSquare) {
+                // Capture state for Undo Tool (before hiding/modifying originalGameSquare)
+                lastMovedSquareForUndo = {
+                    element: originalGameSquare,
+                    name: originalGameSquare.dataset.name,
+                    image: originalGameSquare.dataset.image,
+                    originalLeft: originalGameSquare.style.left,
+                    originalTop: originalGameSquare.style.top,
+                    originalZIndex: originalGameSquare.style.zIndex
+                };
+                console.log('Undo data captured for:', lastMovedSquareForUndo.name);
+                // End Undo data capture
+
+                originalGameSquare.style.display = 'none'; // User's original logic to hide it
+                removedSquaresCount++;
+                console.log('Original game square hidden:', originalGameSquare.dataset.name);
+            } else {
+                console.warn("Undo: dropSquare called without original game square reference.");
             }
 
             const squareInBlue = document.createElement('div');
@@ -94,239 +206,254 @@
             squareInBlue.dataset.image = squareData.image;
             squareInBlue.dataset.name = squareData.name;
 
-            // User's logic for prepending or inserting based on index
-            blueRectangle.prepend(squareInBlue);
-            squaresInBlue.unshift(squareInBlue);
-
-            // ADD THIS (Listener Injection for Lift Tool)
-            squareInBlue.addEventListener('click', function() {
-                handleBlueSquareClick(this);
-            });
-            // END ADDITION
-
-            console.log('Square added to blue rectangle by user dropSquare:', squareData.name);
-            return true;
-        }
-
-        // --- Lift Tool Functions (Implemented/Verified) ---
-        function useLiftTool() {
-            if (!gameStarted) return false;
-            liftToolActive = !liftToolActive;
-            if (liftToolActive) {
-                console.log('Lift tool activated. Click up to 3 squares in the blue rectangle.');
-                if (typeof displayMessage === 'function') displayMessage('اختر حتى 3 مربعات لرفعها من الشريط الأزرق', 'info');
-            } else {
-                console.log('Lift tool deactivated.');
-            }
-            return true;
-        }
-
-        function handleBlueSquareClick(clickedBlueSquareElement) {
-            if (liftToolActive && liftedSquares.length < MAX_LIFTED_SQUARES) {
-                const liftedContainer = document.getElementById('lifted-squares-container');
-                if (!liftedContainer) return;
-
-                const indexInBlue = squaresInBlue.findIndex(sq => sq === clickedBlueSquareElement);
-                if (indexInBlue === -1) return;
-
-                squaresInBlue.splice(indexInBlue, 1);
-
-                const liftedSq = document.createElement('div');
-                liftedSq.className = 'square-in-blue';
-                liftedSq.style.backgroundImage = clickedBlueSquareElement.style.backgroundImage;
-                liftedSq.dataset.image = clickedBlueSquareElement.dataset.image;
-                liftedSq.dataset.name = clickedBlueSquareElement.dataset.name;
-
-                liftedContainer.appendChild(liftedSq);
-                liftedSquares.push(liftedSq);
-                clickedBlueSquareElement.remove();
-
-                liftedSq.addEventListener('click', function() { handleLiftedSquareClick(this); });
-
-                if (liftedSquares.length >= MAX_LIFTED_SQUARES) {
-                    liftToolActive = false;
-                    if (typeof displayMessage === 'function') displayMessage('تم رفع الحد الأقصى من المربعات.', 'info');
-                }
-            } else if (liftToolActive && liftedSquares.length >= MAX_LIFTED_SQUARES) {
-                liftToolActive = false;
-                if (typeof displayMessage === 'function') displayMessage('منطقة الرفع ممتلئة.', 'info');
-            }
-        }
-
-        function handleLiftedSquareClick(clickedLiftedSquareElement) {
-            if (squaresInBlue.length >= 7) {
-                if (typeof displayMessage === 'function') displayMessage('الشريط الأزرق ممتلئ!', 'error');
-                return;
-            }
-            const blueRectangle = document.getElementById('blue-rectangle');
-            if (!blueRectangle) return;
-
-            const indexInLifted = liftedSquares.findIndex(sq => sq === clickedLiftedSquareElement);
-            if (indexInLifted === -1) return;
-            liftedSquares.splice(indexInLifted, 1);
-
-            const squareInBlue = document.createElement('div');
-            squareInBlue.className = 'square-in-blue';
-            squareInBlue.style.backgroundImage = clickedLiftedSquareElement.style.backgroundImage;
-            squareInBlue.dataset.image = clickedLiftedSquareElement.dataset.image;
-            squareInBlue.dataset.name = clickedLiftedSquareElement.dataset.name;
-            squareInBlue.style.opacity = '0'; squareInBlue.style.transform = 'scale(0.5)';
-
             blueRectangle.prepend(squareInBlue);
             squaresInBlue.unshift(squareInBlue);
 
             squareInBlue.addEventListener('click', function() { handleBlueSquareClick(this); });
 
+            updateGameProgress();
+            console.log('Square added to blue rectangle by user dropSquare:', squareData.name);
+
+            // --- Task Progression Logic ---
+            if (currentTask && squareInBlue.dataset.name === currentTask.targetItemName) {
+                currentTask.progress = (currentTask.progress || 0) + 1;
+                displayCurrentTask(); // Update UI with new progress
+
+                if (currentTask.progress >= currentTask.targetItemCount) {
+                    if (typeof displayMessage === 'function') {
+                        displayMessage(`🎉 مهمة مكتملة: ${currentTask.description}! 🎉`, 'success');
+                    }
+                    grantRandomToolReward();
+                    // Generate a new task after a short delay to let user see completion message
+                    setTimeout(() => {
+                        generateRandomTask();
+                    }, 1500);
+                }
+            }
+            // --- End Task Progression Logic ---
+            return true;
+        }
+
+        // --- Lift Tool Functions (from previous step) ---
+        function useLiftTool() { /* ... full implementation from previous step ... */
+            if (!gameStarted) return false; liftToolActive = !liftToolActive;
+            if (liftToolActive) { if (typeof displayMessage === 'function') displayMessage('اختر حتى 3 مربعات لرفعها من الشريط الأزرق', 'info');}
+            return true;
+        }
+        function handleBlueSquareClick(clickedBlueSquareElement) { /* ... full implementation ... */
+             if (liftToolActive && liftedSquares.length < MAX_LIFTED_SQUARES) {
+                const liftedContainer = document.getElementById('lifted-squares-container'); if (!liftedContainer) return;
+                const indexInBlue = squaresInBlue.findIndex(sq => sq === clickedBlueSquareElement); if (indexInBlue === -1) return;
+                squaresInBlue.splice(indexInBlue, 1);
+                const liftedSq = document.createElement('div'); liftedSq.className = 'square-in-blue';
+                liftedSq.style.backgroundImage = clickedBlueSquareElement.style.backgroundImage;
+                liftedSq.dataset.image = clickedBlueSquareElement.dataset.image; liftedSq.dataset.name = clickedBlueSquareElement.dataset.name;
+                liftedContainer.appendChild(liftedSq); liftedSquares.push(liftedSq); clickedBlueSquareElement.remove();
+                liftedSq.addEventListener('click', function() { handleLiftedSquareClick(this); });
+                if (liftedSquares.length >= MAX_LIFTED_SQUARES) { liftToolActive = false; if (typeof displayMessage === 'function') displayMessage('تم رفع الحد الأقصى من المربعات.', 'info');}
+            } else if (liftToolActive && liftedSquares.length >= MAX_LIFTED_SQUARES) { liftToolActive = false; if (typeof displayMessage === 'function') displayMessage('منطقة الرفع ممتلئة.', 'info');}
+        }
+        function handleLiftedSquareClick(clickedLiftedSquareElement) { /* ... full implementation ... */
+            if (squaresInBlue.length >= 7) { if (typeof displayMessage === 'function') displayMessage('الشريط الأزرق ممتلئ!', 'error'); return; }
+            const blueRectangle = document.getElementById('blue-rectangle'); if (!blueRectangle) return;
+            const indexInLifted = liftedSquares.findIndex(sq => sq === clickedLiftedSquareElement); if (indexInLifted === -1) return;
+            liftedSquares.splice(indexInLifted, 1);
+            const squareInBlue = document.createElement('div'); squareInBlue.className = 'square-in-blue';
+            squareInBlue.style.backgroundImage = clickedLiftedSquareElement.style.backgroundImage;
+            squareInBlue.dataset.image = clickedLiftedSquareElement.dataset.image; squareInBlue.dataset.name = clickedLiftedSquareElement.dataset.name;
+            squareInBlue.style.opacity = '0'; squareInBlue.style.transform = 'scale(0.5)';
+            blueRectangle.prepend(squareInBlue);  squaresInBlue.unshift(squareInBlue);
+            squareInBlue.addEventListener('click', function() { handleBlueSquareClick(this); });
             setTimeout(() => { squareInBlue.style.opacity = '1'; squareInBlue.style.transform = 'scale(1)'; }, 10);
             clickedLiftedSquareElement.remove();
-
             if (typeof checkAndRemoveMatchingSquares === 'function') checkAndRemoveMatchingSquares();
         }
-        // --- End Lift Tool Functions ---
 
-        // --- Finger Tool Function (Implemented/Verified) ---
-        function useFingerTool() {
-            if (!gameStarted) return false;
-            fingerToolActive = !fingerToolActive; // Toggle state
-            if (fingerToolActive) {
-                console.log('Finger tool activated. Click any square in the game area.');
-                if (typeof displayMessage === 'function') displayMessage('إصبع التحديد نشط! اختر أي مربع من مساحة اللعب.', 'info');
-                // document.getElementById('squares-container').style.cursor = 'crosshair';
-            } else {
-                console.log('Finger tool deactivated.');
-                // document.getElementById('squares-container').style.cursor = '';
-            }
-            return true; // Consumed upon mode activation
-        }
-
-        // --- User's handleSquareClick (Assumed structure, modified for Finger Tool) ---
-        // This function would be part of the user's original script, attached to game squares.
-        // If it doesn't exist, this defines it with the finger tool logic integrated.
-        function handleSquareClick(square, index) { // Ensure parameters match user's function
-            if (!gameStarted) return;
-
-            if (fingerToolActive) {
-                console.log('Finger tool used on a square.');
-                // The 'square' parameter here is assumed to be the DOM element of the clicked game square.
-                // We need to get its data to pass to dropSquare, similar to how dropSquare expects it.
-                // This might need adjustment based on how 'square' objects/data are structured in the user's game.
-                const squareData = {
-                    name: square.dataset.name || 'Unknown Square', // Fallback name
-                    image: square.dataset.image || square.style.backgroundImage.slice(4, -1).replace(/"/g, "") // Fallback image
-                };
-
-                if (typeof dropSquare === 'function') {
-                    dropSquare(squareData, index); // Pass square data and index
-                } else {
-                    console.error('dropSquare function is not defined!');
-                }
-                fingerToolActive = false; // Deactivate after use
-                // if (document.getElementById('squares-container')) document.getElementById('squares-container').style.cursor = '';
-                return; // Important to prevent further execution of original logic
-            }
-
-            // Original logic of handleSquareClick starts here (simulated from subtask description):
-            const coveredBy = JSON.parse(square.dataset.coveredBy || '[]');
-            if (coveredBy.length === 0) {
-                // Similar to above, prepare squareData for dropSquare
-                 const squareData = {
-                    name: square.dataset.name || 'Unknown Square',
-                    image: square.dataset.image || square.style.backgroundImage.slice(4, -1).replace(/"/g, "")
-                };
-                if (typeof dropSquare === 'function') {
-                    dropSquare(squareData, index);
-                } else {
-                    console.error('dropSquare function is not defined for normal click!');
-                }
-            } else {
-                square.classList.add('shake');
-                setTimeout(() => {
-                    square.classList.remove('shake');
-                }, 400);
-            }
-        }
-        // --- End Finger Tool related modifications ---
-
-
-        // Mockups of other tool functions from previous AI steps
+        // --- Other Tool Placeholders (Hammer, Shuffle) ---
         function useHammerTool() { console.log("Hammer used (placeholder)"); return true; }
         function useShuffleTool() { console.log("Shuffle used (placeholder)"); return true; }
+        function useFingerTool() { /* ... full implementation from previous step ... */
+            if (!gameStarted) return false; fingerToolActive = !fingerToolActive;
+            if (fingerToolActive) { if (typeof displayMessage === 'function') displayMessage('إصبع التحديد نشط!', 'info');}
+            return true;
+        }
 
-
-        // --- User's Original Start Game Logic (Assumed) ---
-        function startGame() {
-            // Lift Tool Reset Logic (Added/Ensured at the beginning)
-            liftToolActive = false;
-            if (Array.isArray(liftedSquares)) {
-                liftedSquares.forEach(sq => { if (sq && typeof sq.remove === 'function') sq.remove(); });
+        // --- Undo Tool Function ---
+        function useUndoTool() {
+            if (!gameStarted || !lastMovedSquareForUndo) {
+                console.log('Undo tool: No action to undo or game not started.');
+                const undoToolElement = document.getElementById('undoTool');
+                if (undoToolElement) {
+                    undoToolElement.classList.add('shake');
+                    setTimeout(() => undoToolElement.classList.remove('shake'), 400);
+                }
+                return false; // No action taken
             }
+
+            let foundInBlueBar = false;
+            for (let i = 0; i < squaresInBlue.length; i++) {
+                if (squaresInBlue[i].dataset.name === lastMovedSquareForUndo.name && squaresInBlue[i].dataset.image === lastMovedSquareForUndo.image) {
+                    squaresInBlue[i].remove();
+                    squaresInBlue.splice(i, 1);
+                    foundInBlueBar = true;
+                    break;
+                }
+            }
+
+            if (!foundInBlueBar) {
+                console.log('Undo tool: The square to undo was not found in the blue bar.');
+                lastMovedSquareForUndo = null;
+                const undoToolElement = document.getElementById('undoTool');
+                if (undoToolElement) {
+                    undoToolElement.classList.add('shake');
+                    setTimeout(() => undoToolElement.classList.remove('shake'), 400);
+                }
+                return false;
+            }
+
+            const squareToRestore = lastMovedSquareForUndo.element;
+            squareToRestore.style.left = lastMovedSquareForUndo.originalLeft;
+            squareToRestore.style.top = lastMovedSquareForUndo.originalTop;
+            squareToRestore.style.zIndex = lastMovedSquareForUndo.originalZIndex;
+            squareToRestore.style.display = '';
+
+            // Assuming dropSquare only hid the square and it's still in the 'squares' array for hit detection etc.
+            // If dropSquare *removed* it from the 'squares' array, it would need to be re-added here.
+            // Based on provided dropSquare, it seems it's only hidden.
+
+            removedSquaresCount--;
+            if(typeof updateGameProgress === 'function') updateGameProgress();
+            if(typeof updateCoveredSquares === 'function') updateCoveredSquares();
+
+            console.log('Undo tool used. Restored:', lastMovedSquareForUndo.name);
+            lastMovedSquareForUndo = null;
+            return true; // Tool consumed
+        }
+        // --- End Undo Tool Function ---
+
+        // --- Task System Functions ---
+        function grantRandomToolReward() {
+            if (currentGameTools.length === 0) {
+                console.log("No current game tools available to grant as a reward.");
+                return;
+            }
+
+            // Randomly pick one of the 3 currently displayed tools
+            const randomToolIndex = Math.floor(Math.random() * currentGameTools.length);
+            const rewardedTool = currentGameTools[randomToolIndex];
+
+            if (rewardedTool && rewardedTool.name) {
+                playerEarnedTools[rewardedTool.name] = (playerEarnedTools[rewardedTool.name] || 0) + 1;
+                console.log(`Player earned 1 ${rewardedTool.name}. Total: ${playerEarnedTools[rewardedTool.name]}`);
+
+                if (typeof displayMessage === 'function') {
+                    displayMessage(`🎁 لقد حصلت على أداة: ${rewardedTool.name}! 🎁`, 'info');
+                }
+                displayCurrentGameTools();
+            } else {
+                console.error("Failed to grant a valid tool reward.", rewardedTool);
+            }
+        }
+
+        function generateRandomTask() {
+            if (allGameTasks.length === 0) {
+                console.log("No tasks available to generate.");
+                currentTask = null;
+                displayCurrentTask();
+                return;
+            }
+
+            let availableTasks = allGameTasks;
+            if (lastTaskGeneratedId && allGameTasks.length > 1) {
+                availableTasks = allGameTasks.filter(task => task.id !== lastTaskGeneratedId);
+                if(availableTasks.length === 0) availableTasks = allGameTasks;
+            }
+
+            const randomIndex = Math.floor(Math.random() * availableTasks.length);
+            currentTask = { ...availableTasks[randomIndex], progress: 0 };
+            lastTaskGeneratedId = currentTask.id;
+
+            console.log("New task generated:", currentTask.description);
+            displayCurrentTask();
+        }
+
+        function displayCurrentTask() {
+            const tasksContainer = document.getElementById('tasks-container');
+            if (!tasksContainer) {
+                console.error("Tasks container not found!");
+                return;
+            }
+
+            if (currentTask) {
+                let taskHTML = '';
+                if (currentTask.relatedImageUrl) {
+                    taskHTML += `<img src="${currentTask.relatedImageUrl}" alt="${currentTask.targetItemName}" style="width: 20px; height: 20px; margin-left: 5px; vertical-align: middle;"> `;
+                }
+                taskHTML += `${currentTask.description} (${currentTask.progress || 0}/${currentTask.targetItemCount})`;
+                tasksContainer.innerHTML = taskHTML;
+                tasksContainer.style.display = 'block'; // CSS for #tasks-container should have display:none initially
+            } else {
+                tasksContainer.innerHTML = '';
+                tasksContainer.style.display = 'none';
+            }
+        }
+        // --- End Task System Functions ---
+
+        // --- User's startGame (incorporating prior tool resets) ---
+        function startGame() {
+            console.log("User's startGame called for full reset and setup.");
+            gameStarted = true;
+
+            // Resetting tool states
+            liftToolActive = false;
+            if (Array.isArray(liftedSquares)) { liftedSquares.forEach(sq => { if (sq && sq.remove) sq.remove(); });}
             liftedSquares = [];
             const liftedContainerDOM = document.getElementById('lifted-squares-container');
             if (liftedContainerDOM) liftedContainerDOM.innerHTML = '';
-            // End Lift Tool Reset Logic
 
-            // Finger Tool Reset Logic (Added/Ensured at the beginning)
             fingerToolActive = false;
-            // if (document.getElementById('squares-container')) document.getElementById('squares-container').style.cursor = '';
-            // End Finger Tool Reset Logic
+            lastMovedSquareForUndo = null; // Reset for Undo Tool
 
-            console.log("User's startGame called.");
-            gameStarted = true;
-            squaresInBlue.forEach(sq => sq.remove());
-            squaresInBlue = [];
-            // Other user's game reset logic...
+            // Reset and generate new task
+            currentTask = null;
+            lastTaskGeneratedId = null;
+            generateRandomTask();
 
-            // AI-added tool selection from previous steps
+            // Resetting game board and blue bar
+            squares.forEach(sq => sq.remove()); // Clear main game squares from DOM
+            squares = []; // Clear array
+            squaresInBlue.forEach(sq => sq.remove()); // Clear blue bar squares from DOM
+            squaresInBlue = []; // Clear array
+            removedSquaresCount = 0;
+
+            // Setup tools UI
             selectRandomTools();
             allTools.forEach(tool => playerEarnedTools[tool.name] = 0);
-            currentGameTools.forEach(tool => playerEarnedTools[tool.name] = 1); // Grant for testing
+            currentGameTools.forEach(tool => playerEarnedTools[tool.name] = 1);
             displayCurrentGameTools();
+            updateGameProgress(); // Initial progress update
 
-            // Test: Add a few squares to blue bar using user's dropSquare
-            dropSquare({ name: 'sq1', image: 'https://via.placeholder.com/50/red/fff?text=1' }, 0);
-            dropSquare({ name: 'sq2', image: 'https://via.placeholder.com/50/green/fff?text=2' }, 0);
-            dropSquare({ name: 'sq3', image: 'https://via.placeholder.com/50/blue/fff?text=3' }, 0);
-        }
-
-        // AI-added tool display functions from previous steps
-        function selectRandomTools() {
-            currentGameTools = [];
-            const toolsCopy = [...allTools];
-            for (let i = 0; i < 3; i++) {
-                if (toolsCopy.length === 0) break;
-                const randomIndex = Math.floor(Math.random() * toolsCopy.length);
-                currentGameTools.push(toolsCopy.splice(randomIndex, 1)[0]);
+            // Example: Populate #squares-container with some game squares for testing
+            const gameArea = document.getElementById('squares-container');
+            if(gameArea) {
+                createGameSquare({ name: 'GameSq1', image: 'https://via.placeholder.com/50/orange/fff?text=G1', left: 10, top: 10, coveredBy: ['GameSq2']}, gameArea);
+                createGameSquare({ name: 'GameSq2', image: 'https://via.placeholder.com/50/purple/fff?text=G2', left: 70, top: 10, coveredBy: []}, gameArea);
+                createGameSquare({ name: 'GameSq3', image: 'https://via.placeholder.com/50/teal/fff?text=G3', left: 10, top: 70, coveredBy: []}, gameArea);
             }
         }
 
-        function displayCurrentGameTools() {
-            const toolsContainer = document.getElementById('tools-container');
-            if (!toolsContainer) return;
-            toolsContainer.innerHTML = '';
-            currentGameTools.forEach(tool => {
-                const toolSquare = document.createElement('div');
-                toolSquare.className = 'tool-square';
-                toolSquare.id = tool.id;
-                toolSquare.style.backgroundImage = `url(${tool.imageUrl || 'placeholder.png'})`;
-                toolSquare.title = tool.name;
-                toolSquare.addEventListener('click', () => {
-                    if (playerEarnedTools[tool.name] > 0) {
-                        const success = tool.action();
-                        if (success) {
-                            playerEarnedTools[tool.name]--;
-                            toolSquare.style.opacity = playerEarnedTools[tool.name] > 0 ? '1' : '0.5';
-                        }
-                    } else {
-                        toolSquare.classList.add('shake');
-                        setTimeout(() => toolSquare.classList.remove('shake'), 400);
-                    }
-                });
-                toolSquare.style.opacity = playerEarnedTools[tool.name] > 0 ? '1' : '0.5';
-                toolsContainer.appendChild(toolSquare);
-            });
+        // --- Tool UI and Selection (from prior AI steps) ---
+        function selectRandomTools() { /* ... full implementation ... */
+            currentGameTools = []; const toolsCopy = [...allTools];
+            for (let i = 0; i < 3; i++) { if (toolsCopy.length === 0) break; const ri = Math.floor(Math.random() * toolsCopy.length); currentGameTools.push(toolsCopy.splice(ri, 1)[0]);}
+        }
+        function displayCurrentGameTools() { /* ... full implementation ... */
+            const tc = document.getElementById('tools-container'); if (!tc) return; tc.innerHTML = '';
+            currentGameTools.forEach(t => {const ts = document.createElement('div'); ts.className = 'tool-square'; ts.id = t.id; ts.style.backgroundImage = `url(${t.imageUrl})`; ts.title = t.name;
+            ts.addEventListener('click', () => { if (playerEarnedTools[t.name] > 0) {const s = t.action(); if(s){playerEarnedTools[t.name]--; ts.style.opacity = playerEarnedTools[t.name] > 0 ? '1':'0.5';}} else {ts.classList.add('shake'); setTimeout(()=>ts.classList.remove('shake'),400);}});
+            ts.style.opacity = playerEarnedTools[t.name] > 0 ? '1' : '0.5'; tc.appendChild(ts);});
         }
 
-        // Auto-start game for testing
         document.addEventListener('DOMContentLoaded', startGame);
     </script>
 </body>
